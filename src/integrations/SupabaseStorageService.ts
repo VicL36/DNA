@@ -1,4 +1,3 @@
-// Serviço REAL de Supabase Storage - DNA UP Platform
 import { supabase } from '@/lib/supabase'
 
 export interface SupabaseStorageConfig {
@@ -22,31 +21,20 @@ export class SupabaseStorageService {
       bucketName: import.meta.env.VITE_SUPABASE_BUCKET_NAME || 'dna-protocol-files',
       baseUrl: import.meta.env.VITE_SUPABASE_URL || ''
     }
-
     console.log('🔧 Configurando Supabase Storage Service...')
     console.log('🪣 Bucket Name:', this.config.bucketName)
     console.log('🔗 Base URL:', this.config.baseUrl?.substring(0, 30) + '...')
   }
 
-  /**
-   * @description Gera o caminho da pasta para um usuário específico.
-   * @param {string} userEmail - O email do usuário.
-   * @returns {string} O caminho da pasta do usuário.
-   */
   private getUserFolderPath(userEmail: string): string {
     if (!userEmail) {
-      console.error("Erro Crítico: userEmail não foi fornecido para gerar o caminho da pasta.");
-      throw new Error("userEmail é nulo ou indefinido. Impossível continuar com a operação de armazenamento.");
+      console.error("Erro Crítico: userEmail não fornecido para gerar o caminho da pasta.")
+      throw new Error("userEmail é nulo ou indefinido. Impossível continuar com a operação de armazenamento.")
     }
-    const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
+    const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_')
     return `users/${sanitizedEmail}`
   }
 
-  /**
-   * @description Faz o upload de um arquivo de áudio.
-   * @param {object} request - O objeto da requisição contendo o blob do áudio e metadados.
-   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
-   */
   async uploadAudioFile(request: {
     audioBlob: Blob,
     userEmail: string,
@@ -54,18 +42,14 @@ export class SupabaseStorageService {
     questionText: string
   }): Promise<StorageUploadResponse> {
     try {
-      console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
       const userFolderPath = this.getUserFolderPath(request.userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
       const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
       const filePath = `${userFolderPath}/audio/${fileName}`
 
-      const audioFile = new File([request.audioBlob], fileName, { type: 'audio/wav' });
+      const audioFile = new File([request.audioBlob], fileName, { type: 'audio/wav' })
 
-      console.log('📄 Arquivo:', audioFile.name, 'Tamanho:', audioFile.size, 'bytes')
-      console.log('📤 Fazendo upload do áudio para:', filePath)
-
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(this.config.bucketName)
         .upload(filePath, audioFile, {
           cacheControl: '3600',
@@ -84,25 +68,19 @@ export class SupabaseStorageService {
     }
   }
 
-  /**
-   * @description Faz o upload de um relatório final (PDF ou TXT).
-   * @param {object} request - O objeto contendo o blob do relatório e metadados.
-   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
-   */
   async uploadFinalReport(request: {
     userEmail: string,
     reportBlob: Blob,
-    reportType?: "pdf" | "txt"
+    reportType?: 'pdf' | 'txt'
   }): Promise<StorageUploadResponse> {
     try {
-      console.log('📄 Iniciando upload do relatório final para Supabase Storage...')
       const userFolderPath = this.getUserFolderPath(request.userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const type = request.reportType ?? "pdf"
+      const type = request.reportType ?? 'pdf'
       const fileName = `FINAL_REPORT_${timestamp}.${type}`
       const filePath = `${userFolderPath}/reports/${fileName}`
 
-      const reportFile = new File([request.reportBlob], fileName, { type: type === "pdf" ? 'application/pdf' : 'text/plain' });
+      const reportFile = new File([request.reportBlob], fileName, { type: type === 'pdf' ? 'application/pdf' : 'text/plain' })
 
       const { error } = await supabase.storage
         .from(this.config.bucketName)
@@ -123,11 +101,6 @@ export class SupabaseStorageService {
     }
   }
 
-  /**
-   * @description Faz o upload genérico de qualquer arquivo.
-   * @param {object} request - O objeto contendo o blob do arquivo, nome e caminho.
-   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
-   */
   async uploadGenericFile(request: {
     userEmail: string,
     fileBlob: Blob,
@@ -140,7 +113,7 @@ export class SupabaseStorageService {
       const folderPath = request.folder ? `${userFolderPath}/${request.folder}` : userFolderPath
       const filePath = `${folderPath}/${request.fileName}`
 
-      const file = new File([request.fileBlob], request.fileName, { type: request.mimeType || 'application/octet-stream' });
+      const file = new File([request.fileBlob], request.fileName, { type: request.mimeType || 'application/octet-stream' })
 
       const { error } = await supabase.storage
         .from(this.config.bucketName)
@@ -161,6 +134,39 @@ export class SupabaseStorageService {
     }
   }
 
+  async uploadTranscription(request: {
+    userEmail: string,
+    transcriptionBlob: Blob,
+    questionIndex: number,
+    questionText?: string
+  }): Promise<StorageUploadResponse> {
+    try {
+      const userFolderPath = this.getUserFolderPath(request.userEmail)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_TRANSCRIPTION_${timestamp}.txt`
+      const filePath = `${userFolderPath}/transcriptions/${fileName}`
+
+      const transcriptionFile = new File([request.transcriptionBlob], fileName, { type: 'text/plain' })
+
+      const { error } = await supabase.storage
+        .from(this.config.bucketName)
+        .upload(filePath, transcriptionFile, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'text/plain'
+        })
+
+      if (error) {
+        console.error('❌ Erro no upload da transcrição:', error)
+        throw new Error(`Erro no upload da transcrição: ${error.message}`)
+      }
+
+      return this.buildUploadResponse(fileName, filePath)
+    } catch (err) {
+      throw new Error(`Falha ao enviar transcrição: ${err}`)
+    }
+  }
+
   private buildUploadResponse(fileName: string, filePath: string): StorageUploadResponse {
     const fileUrl = `${this.config.baseUrl}/storage/v1/object/public/${this.config.bucketName}/${filePath}`
     return {
@@ -172,9 +178,9 @@ export class SupabaseStorageService {
     }
   }
 
-  // Verifica se o serviço está configurado corretamente
   isConfigured(): boolean {
-    return !!this.config.baseUrl && !!this.config.bucketName;
+    return !!this.config.baseUrl && !!this.config.bucketName
   }
 }
-export const supabaseStorageService = new SupabaseStorageService();
+
+export const supabaseStorageService = new SupabaseStorageService()
