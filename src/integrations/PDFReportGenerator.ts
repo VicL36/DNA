@@ -53,6 +53,11 @@ export class PDFReportGenerator {
     return pdfBlob
   }
 
+  // Método alternativo para compatibilidade (alias)
+  static async generate(data: PDFReportData): Promise<Blob> {
+    return this.generateReport(data)
+  }
+
   private addCoverPage(data: PDFReportData): void {
     const { doc } = this
     
@@ -318,3 +323,5 @@ export class PDFReportGenerator {
   }
 }
 
+// Export default para compatibilidade
+export default PDFReportGenerator
