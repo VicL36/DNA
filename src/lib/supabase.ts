@@ -3,17 +3,26 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Verificar se as variáveis estão configuradas
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('🚨 ERRO: Variáveis de ambiente Supabase não encontradas!')
-  console.error('📋 Verifique o arquivo .env na raiz do projeto')
-  console.error('✅ VITE_SUPABASE_URL deve estar configurado')
-  console.error('✅ VITE_SUPABASE_ANON_KEY deve estar configurado')
-} else {
-  console.log('✅ Supabase configurado corretamente')
-  console.log('📍 URL:', supabaseUrl?.substring(0, 30) + '...')
-  console.log('🔑 Key length:', supabaseAnonKey?.length || 0)
+  console.error('📋 CHECKLIST URGENTE:')
+  console.error('1. ✅ Criar novo projeto Supabase: https://supabase.com/dashboard')
+  console.error('2. ✅ Copiar URL e chave anônima')
+  console.error('3. ✅ Atualizar Railway com variáveis de ambiente')
+  console.error('4. ✅ Executar migração SQL no Supabase')
+  console.error('5. ✅ Configurar Google OAuth')
+  
+  // Não quebrar em produção, usar valores padrão
+  if (import.meta.env.PROD) {
+    console.warn('⚠️ Usando configuração de fallback em produção')
+  } else {
+    throw new Error('❌ CONFIGURAÇÃO SUPABASE INCOMPLETA - Veja o console para instruções')
+  }
 }
+
+console.log('🔵 Configurando Supabase DNA UP...')
+console.log('📍 URL:', supabaseUrl?.substring(0, 30) + '...')
+console.log('🔑 Key length:', supabaseAnonKey?.length || 0)
 
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co', 
@@ -33,11 +42,15 @@ export const supabase = createClient(
   }
 )
 
-// Test connection
-if (supabaseUrl && supabaseAnonKey) {
+// Test connection only in development
+if (!import.meta.env.PROD && supabaseUrl && supabaseAnonKey) {
   supabase.auth.getSession().then(({ data, error }) => {
     if (error) {
       console.error('❌ Erro na conexão Supabase:', error.message)
+      console.error('🔧 Possíveis soluções:')
+      console.error('1. Verificar se o projeto Supabase existe')
+      console.error('2. Verificar se as credenciais estão corretas')
+      console.error('3. Executar a migração SQL')
     } else {
       console.log('✅ Conexão Supabase OK:', data.session ? 'Autenticado' : 'Não autenticado')
     }

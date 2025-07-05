@@ -1,4 +1,4 @@
-// Serviço REAL de Supabase Storage - DNA UP Platform - CORRIGIDO FINAL
+// Serviço REAL de Supabase Storage - DNA UP Platform
 import { supabase } from '@/lib/supabase'
 
 export interface SupabaseStorageConfig {
@@ -19,39 +19,13 @@ export class SupabaseStorageService {
 
   constructor() {
     this.config = {
-      bucketName: 'dna-protocol-files', // Bucket fixo criado via SQL
+      bucketName: 'dna-protocol-files', // Bucket principal para todos os arquivos
       baseUrl: import.meta.env.VITE_SUPABASE_URL || ''
     }
 
     console.log('🔧 Configurando Supabase Storage Service...')
     console.log('🪣 Bucket Name:', this.config.bucketName)
     console.log('🔗 Base URL:', this.config.baseUrl?.substring(0, 30) + '...')
-  }
-
-  // Verificar se o bucket existe (não criar, apenas verificar)
-  private async checkBucketExists(): Promise<boolean> {
-    try {
-      const { data: buckets, error } = await supabase.storage.listBuckets()
-      
-      if (error) {
-        console.error('❌ Erro ao verificar buckets:', error)
-        return false
-      }
-
-      const bucketExists = buckets?.some(bucket => bucket.name === this.config.bucketName)
-      
-      if (bucketExists) {
-        console.log('✅ Bucket existe:', this.config.bucketName)
-        return true
-      } else {
-        console.error('❌ Bucket não existe:', this.config.bucketName)
-        console.error('🔧 Execute a migração SQL: supabase/migrations/20250630020001_fix_storage_setup.sql')
-        return false
-      }
-    } catch (error) {
-      console.error('❌ Erro ao verificar bucket:', error)
-      return false
-    }
   }
 
   // Criar pasta para o usuário (estrutura de pastas no Storage)
@@ -68,14 +42,8 @@ export class SupabaseStorageService {
     questionText: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('🎵 Iniciando upload REAL de áudio para Supabase Storage...')
+      console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
       console.log('📄 Arquivo:', file.name, 'Tamanho:', file.size, 'bytes')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -89,7 +57,7 @@ export class SupabaseStorageService {
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: file.type || 'audio/wav'
+          contentType: 'audio/wav'
         })
 
       if (error) {
@@ -128,13 +96,7 @@ export class SupabaseStorageService {
     questionText: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('📝 Enviando transcrição REAL para Supabase Storage...')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
+      console.log('📝 Enviando transcrição para Supabase Storage...')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -198,13 +160,7 @@ Gerado automaticamente pelo DNA UP Platform
     userEmail: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('🤖 Enviando dataset de fine-tuning REAL para Supabase Storage...')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
+      console.log('🤖 Enviando dataset de fine-tuning para Supabase Storage...')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -217,7 +173,6 @@ Gerado automaticamente pelo DNA UP Platform
       const blob = new Blob([jsonlContent], { type: 'application/jsonl' })
 
       console.log('📤 Fazendo upload do dataset para:', filePath)
-      console.log('📊 Dataset contém:', dataset.length, 'exemplos')
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
@@ -239,7 +194,6 @@ Gerado automaticamente pelo DNA UP Platform
 
       console.log('✅ Dataset de fine-tuning enviado com sucesso!')
       console.log('📁 Path:', data.path)
-      console.log('🔗 URL:', publicUrlData.publicUrl)
 
       return {
         fileId: data.path,
@@ -262,13 +216,7 @@ Gerado automaticamente pelo DNA UP Platform
     responses: any[]
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('📊 Gerando relatório final REAL completo...')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
+      console.log('📊 Gerando relatório final completo...')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -365,7 +313,6 @@ ${responses.map((response, i) => `
 
       console.log('✅ Relatório final enviado com sucesso!')
       console.log('📁 Path:', data.path)
-      console.log('🔗 URL:', publicUrlData.publicUrl)
 
       return {
         fileId: data.path,
@@ -394,9 +341,7 @@ ${responses.map((response, i) => `
     return {
       hasBucketName: !!this.config.bucketName,
       hasBaseUrl: !!this.config.baseUrl,
-      isConfigured: this.isConfigured(),
-      bucketName: this.config.bucketName,
-      baseUrl: this.config.baseUrl?.substring(0, 30) + '...'
+      isConfigured: this.isConfigured()
     }
   }
 
@@ -415,7 +360,6 @@ ${responses.map((response, i) => `
         return []
       }
 
-      console.log('✅ Arquivos listados:', data?.length || 0)
       return data || []
     } catch (error) {
       console.error('❌ Erro ao listar arquivos:', error)
@@ -460,3 +404,4 @@ ${responses.map((response, i) => `
 
 // Instância singleton
 export const supabaseStorageService = new SupabaseStorageService()
+
