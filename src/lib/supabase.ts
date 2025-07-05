@@ -1,23 +1,26 @@
+// src/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY
+// Pegando as variáveis do ambiente
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-// Verificar se as variáveis estão configuradas
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('🚨 ERRO: Variáveis de ambiente Supabase não encontradas!')
   console.error('📋 Verifique o arquivo .env na raiz do projeto')
   console.error('✅ VITE_SUPABASE_URL deve estar configurado')
   console.error('✅ VITE_SUPABASE_ANON_KEY deve estar configurado')
+  throw new Error('Supabase environment variables not found')
 } else {
   console.log('✅ Supabase configurado corretamente')
   console.log('📍 URL:', supabaseUrl?.substring(0, 30) + '...')
   console.log('🔑 Key length:', supabaseAnonKey?.length || 0)
 }
 
+// Criação única do client Supabase
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-key', 
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: true,
@@ -33,18 +36,16 @@ export const supabase = createClient(
   }
 )
 
-// Test connection
-if (supabaseUrl && supabaseAnonKey) {
-  supabase.auth.getSession().then(({ data, error }) => {
-    if (error) {
-      console.error('❌ Erro na conexão Supabase:', error.message)
-    } else {
-      console.log('✅ Conexão Supabase OK:', data.session ? 'Autenticado' : 'Não autenticado')
-    }
-  })
-}
+// Teste de conexão (opcional, pode remover se quiser)
+supabase.auth.getSession().then(({ data, error }) => {
+  if (error) {
+    console.error('❌ Erro na conexão Supabase:', error.message)
+  } else {
+    console.log('✅ Conexão Supabase OK:', data.session ? 'Autenticado' : 'Não autenticado')
+  }
+})
 
-// Database Types - Updated to use created_at
+// Database Types - mantenha aqui, exportando
 export interface Database {
   public: {
     Tables: {
