@@ -245,27 +245,41 @@ export async function saveTranscriptionToStorage(
 
 // Gerar relatório final + Dataset de Fine-tuning - NOVA FUNCIONALIDADE
 export async function generateFinalReportAndDataset(
-  sessionId: string,
   userEmail: string,
-  question: string,
-  userResponse: string,
-  llmResponse: LLMResponse
-): Promise<void> {
+  analysisResult: any,
+  responses: any[]
+): Promise<{ reportFileUrl: string, datasetFileUrl: string, voiceCloningData: any[] }> {
   try {
-    console.log('📊 Gerando dataset de fine-tuning...')
+    console.log("📊 Gerando dataset de fine-tuning...")
 
+    // Gerar dataset de fine-tuning
     await FineTuningDatasetGenerator.generate(
-      sessionId,
+      analysisResult.sessionId || "",
       userEmail,
-      question,
-      userResponse,
-      llmResponse
+      analysisResult.question || "",
+      analysisResult.userResponse || "",
+      analysisResult // Passar o objeto analysisResult completo
     )
 
-    console.log('✅ Dataset de fine-tuning gerado com sucesso!')
+    console.log("✅ Dataset de fine-tuning gerado com sucesso!")
+
+    // Gerar relatório final em PDF
+    const reportUpload = await supabaseStorageService.uploadFinalReport(
+      userEmail,
+      analysisResult,
+      responses
+    )
+
+    console.log("✅ Relatório final em PDF gerado e enviado com sucesso!")
+
+    return {
+      reportFileUrl: reportUpload.publicUrl,
+      datasetFileUrl: "URL_DO_DATASET_AQUI", // TODO: Obter URL real do dataset
+      voiceCloningData: [] // TODO: Implementar coleta de dados para voice cloning
+    }
 
   } catch (error) {
-    console.error("❌ Erro ao gerar dataset:", error)
+    console.error("❌ Erro ao gerar relatório final e dataset:", error)
     throw error
   }
 }
