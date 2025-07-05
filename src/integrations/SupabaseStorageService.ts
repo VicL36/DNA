@@ -34,6 +34,11 @@ export class SupabaseStorageService {
    * @returns {string} O caminho da pasta do usuário.
    */
   private getUserFolderPath(userEmail: string): string {
+    // Adiciona uma verificação para garantir que userEmail não seja nulo ou indefinido.
+    if (!userEmail) {
+      console.error("Erro Crítico: userEmail não foi fornecido para gerar o caminho da pasta.");
+      throw new Error("userEmail é nulo ou indefinido. Impossível continuar com a operação de armazenamento.");
+    }
     const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
     return `users/${sanitizedEmail}`
   }
@@ -44,7 +49,7 @@ export class SupabaseStorageService {
    * @returns {Promise<StorageUploadResponse>} A resposta do upload.
    */
   async uploadAudioFile(request: {
-    audioBlob: Blob, // Alterado de 'file: File' para 'audioBlob: Blob'
+    audioBlob: Blob,
     userEmail: string,
     questionIndex: number,
     questionText: string
@@ -65,7 +70,7 @@ export class SupabaseStorageService {
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, audioFile, { // Usa o audioFile criado
+        .upload(filePath, audioFile, {
           cacheControl: '3600',
           upsert: false,
           contentType: 'audio/wav'
