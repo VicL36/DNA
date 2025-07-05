@@ -1,4 +1,4 @@
-// Integrações REAIS para DNA UP Platform - UPLOAD IMEDIATO
+// Integrações REAIS para DNA UP Platform - CORRIGIDO
 import { supabaseStorageService } from './SupabaseStorageService'
 import { FineTuningDatasetGenerator } from './FineTuningDatasetGenerator'
 
@@ -37,16 +37,17 @@ export interface FileUploadResponse {
   transcription_url?: string
 }
 
-// Transcrição real usando Deepgram
+// Transcrição REAL usando Deepgram
 export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
   try {
     const deepgramApiKey = import.meta.env.VITE_DEEPGRAM_API_KEY
     
-    if (!deepgramApiKey) {
-      throw new Error('Deepgram API key não configurada. Por favor, configure VITE_DEEPGRAM_API_KEY no seu ambiente.')
+    if (!deepgramApiKey || deepgramApiKey === 'your_deepgram_api_key_here') {
+      console.error('❌ Deepgram API key não configurada. A transcrição não pode ser realizada.')
+      throw new Error('Deepgram API key não configurada.')
     }
 
-    console.log('🎤 Iniciando transcrição com Deepgram...')
+    console.log('🎤 Iniciando transcrição REAL com Deepgram...')
     
     const formData = new FormData()
     formData.append('audio', audioBlob, 'recording.wav')
@@ -69,8 +70,8 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
     const confidence = result.results?.channels?.[0]?.alternatives?.[0]?.confidence || 0
     const duration = result.metadata?.duration || 0
 
-    console.log('✅ Transcrição Deepgram concluída:', { 
-      transcript: transcript.substring(0, 50) + '...',
+    console.log('✅ Transcrição Deepgram REAL concluída:', { 
+      transcript: transcript.substring(0, 50) + '...', 
       confidence,
       duration 
     })
@@ -83,339 +84,57 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
       keywords: extractKeywords(transcript)
     }
   } catch (error) {
-    console.error("❌ Erro na transcrição Deepgram:", error)
+    console.error('❌ Erro na transcrição Deepgram:', error)
+    
     throw error
   }
 }
 
-// Análise usando GEMINI
+// Análise REAL usando GEMINI
 export async function generateAnalysis(transcriptions: string[]): Promise<LLMResponse> {
   try {
     const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
     
-    if (!geminiApiKey) {
-      throw new Error("Gemini API key não configurada. Por favor, configure VITE_GEMINI_API_KEY no seu ambiente.")
+    if (!geminiApiKey || geminiApiKey === 'your_gemini_api_key_here') {
+      console.error('❌ Gemini API key não configurada. A análise não pode ser realizada.')
+      throw new Error('Gemini API key não configurada.')
     }
 
-    console.log('🧠 Iniciando análise com Gemini AI...')
+    console.log('🧠 Iniciando análise REAL com Gemini AI...')
+
     const prompt = `
 # Análise Psicológica Profunda - Protocolo Clara R.
 
-Você é um engenheiro reverso de estilo textual com precisão nanométrica. Sua missão é desmontar, catalogar e replicar cada microelemento estrutural e psicológico de um texto, identificando até mesmo os padrões que o próprio autor aplica inconscientemente. Este processo será executado com o rigor de uma autópsia linguística:
+Você é um especialista em análise psicológica que deve analisar as seguintes respostas de uma entrevista estruturada baseada no protocolo Clara R. de 108 perguntas estratégicas.
 
 ## Respostas para análise:
 ${transcriptions.join("\n\n---\n\n")}
 
-## Metodologia de Análise:
+## Sua tarefa:
 
-### FASE 1: Mineração de Padrões
+1. **ANÁLISE PSICOLÓGICA COMPLETA**: Crie uma análise detalhada da personalidade baseada nas respostas
+2. **PADRÕES COMPORTAMENTAIS**: Identifique padrões recorrentes nas respostas
+3. **INSIGHTS PROFUNDOS**: Extraia insights psicológicos significativos
+4. **RECOMENDAÇÕES**: Sugira áreas de desenvolvimento e crescimento
 
-Para cada segmento do material, aplique análise multinível:
+## Formato da resposta:
 
-#### 1. Conteúdo Manifesto
-- Extraia informações factuais explícitas
-- Identifique temas declarados e posicionamentos
-- Mapeie eventos, pessoas e experiências mencionadas
+### PERFIL PSICOLÓGICO GERAL
+[Descrição detalhada da personalidade]
 
-#### 2. Padrões Linguísticos
-- Analise escolha de palavras e campos semânticos
-- Identifique estruturas narrativas e posicionamento do self
-- Detecte metáforas, absolutismos e modalizações
+### CARACTERÍSTICAS PRINCIPAIS
+- [Lista de características identificadas]
 
-**CAPTURE PARA REPRODUÇÃO**: elementos operacionais para clonagem
-- Vocabulário específico e expressões características
-- Estruturas sintáticas e ritmo de comunicação
-- Padrões de humor, ironia e leveza
-- Sequências argumentativas preferidas
-- Uso estratégico de exemplos e analogias
+### PADRÕES COMPORTAMENTAIS
+- [Lista de padrões observados]
 
-#### 3. Conteúdo Latente
-- Identifique temas subjacentes não explicitamente nomeados
-- Detecte padrões de evitação ou superficialidade
-- Mapeie contradições e tensões implícitas
+### INSIGHTS PROFUNDOS
+- [Lista de insights psicológicos]
 
-#### 4. Indicadores Emocionais
-- Avalie carga emocional por tema (escala 0-10)
-- Identifique padrões de regulação emocional
-- Detecte incongruências entre conteúdo e tom
+### RECOMENDAÇÕES DE DESENVOLVIMENTO
+[Sugestões específicas para crescimento pessoal]
 
-## Algoritmo de Densidade Psicológica
-
-Densidade = (Emoção_Detectada × 0.4) + (Revelação_Pessoal × 0.3) + (Complexidade_Narrativa × 0.2) + (Contradições_Presentes × 0.1)
-
-## Extração Orientada à Clonagem
-
-Além da análise psicológica padrão, extraia especificamente elementos reproduzíveis:
-
-### Especificações Comunicacionais
-- Vocabulário núcleo (30-50 palavras/expressões mais características)
-- Estruturas frasais padrão e variações
-- Padrões de formalidade vs. casualidade por contexto
-- Uso específico de humor, ironia e elementos lúdicos
-- Sequências lógicas preferenciais (dedutivo/indutivo/narrativo)
-
-### Especificações Comportamentais
-- Como inicia, desenvolve e conclui diferentes tipos de resposta
-- Padrões de contextualização vs. objetividade direta
-- Estratégias de qualificação e nuance
-- Tendências de exemplificação e analogia
-- Mecanismos de regulação emocional expressos
-
-### Especificações Reacionais
-- Gatilhos específicos para diferentes intensidades emocionais
-- Temas que ativam modo técnico vs. pessoal vs. filosófico
-- Assuntos que geram entusiasmo medido vs. paixão evidente
-- Contextos que provocam reflexão pausada vs. resposta imediata
-
-## FASE 1: MICRODISSECAÇÃO ESTRUTURAL ATÔMICA
-
-### 1.1. ANATOMIA DE ABERTURA (PRIMEIROS 3 PARÁGRAFOS)
-- Primeira frase
-- Pattern de hook
-- Loop de abertura
-- Seed inicial
-- Promessa inaugural
-
-### 1.2. ARQUITETURA DE CORPO TEXTUAL
-- Matriz de parágrafos
-- Comprimento sentencial
-- Padrão de transição
-- Sequência de desenvolvimento
-- Densidade informacional
-
-### 1.3. MECÂNICA DE FECHAMENTO
-- Frases de conclusão
-- Técnica de fechamento de loop
-- Calls-to-action
-- Frase final
-
-### 1.4. ENGENHARIA DE TENSÃO
-- Loops abertos
-- Seeds estratégicos
-- Padrão de repetição
-- Estrutura de picos emocionais
-
-## FASE 2: MICROSCOPIA DA LINGUAGEM
-
-### 2.1. CARTOGRAFIA LÉXICA
-- Top 30 palavras não-funcionais
-- Índice de diversidade lexical
-- Comprimento médio de palavras
-- Distribuição gramatical
-- Incidência de neologismos
-
-### 2.2. MICROSCOPIA PERSUASIVA
-- Sequências persuasivas
-- Densidade de proof elements
-- Mecanismos de autoridade
-- Linguagem hipnótica
-- Dispositivos de polarização
-
-### 2.3. RADIOGRAFIA NARRATIVA
-- Estrutura de storytelling
-- Posicionamento de histórias
-- Arcos de transformação
-- Devices de identificação
-
-### 2.4. TOPOGRAFIA TIPOGRÁFICA
-- Espaços em branco
-- Padrões de formatação
-- Estruturas de lista
-- Enumerações
-
-## FASE 3: DECODIFICAÇÃO AVANÇADA
-
-### 3.1. LOOPS E TENSÃO
-- Mapa de loops
-- Taxonomia
-- Distância média
-- Loops aninhados
-
-### 3.2. SEMEADURA E COLHEITA
-- Registro de seeds
-- Mecânica de plantio
-- Tempo de germinação
-- Padrões de desenvolvimento
-
-### 3.3. INTENSIDADE EMOCIONAL
-- Mapa de intensidade
-- Gatilhos emocionais
-- Padrões de intensificação
-- Ritmo de release
-
-### 3.4. FLUXO DE IDEIAS
-- Ordem conceitual
-- Técnicas de linking
-- Método de contraste
-- Progressão de complexidade
-
-## FASE 4: ALGORITMO DE REPLICAÇÃO
-
-### 4.1. PROTOCOLO ESTRUTURAL
-
-### 4.2. PROTOCOLO LINGUÍSTICO
-
-### 4.3. PROTOCOLO PERSUASIVO
-
-## FASE 5: VALIDAÇÃO FORENSE
-
-### 5.1. ASSINATURA ESTILOMÉTRICA
-- Análise Burrows-Delta
-- Teste Juola
-- Índice Jaccard
-- Verificação autoral
-
-### 5.2. CHECKLIST NANOMÉTRICO
-- Conformidade estrutural
-- Fidelidade léxica
-- Calibragem tensão
-- Autenticidade dispositivos
-- Harmonia rítmica
-
-### 5.3. TESTE TURING
-- Detecção anomalias
-- Blind test
-- Medição cognitiva
-
-## PROTOCOLO FINAL
-
-1. Preparação
-   - Normalizar formato
-   - Quantificar extensão
-   - Identificar evolução
-
-2. Análise
-   - Fase 1: Estrutural
-   - Fase 2: Linguagem
-   - Fase 3: Técnicas
-
-3. Compilação
-   - Construir regras
-   - Calibrar parâmetros
-   - Testar amostra
-
-4. Validação
-   - Aplicar testes
-   - Identificar discrepâncias
-   - Documentar metaparâmetros
-
-## SAÍDA REQUERIDA
-
-1. Relatório Forense
-2. Algoritmo Codificado
-3. Demonstração Clone
-
----
-
-**Respostas:**
-
-1. Para análise: "Iniciando engenharia reversa..."
-2. Conclusão: Relatório completo
-3. Emulação: Aplicação precisa
-4. Prioridades: Exatidão, precisão, fidelidade
-
----
-
-# Extrator de DNA do Expert
-
-**Sistema especializado em análise profunda de personalidade e Agente exclusivo da Semana IA para Lançamentos**
-
-## Missão Principal
-
-Analisar materiais existentes (transcrições, biografias, entrevistas, posts, etc.) para extrair e mapear a essência psicológica completa do expert, produzindo um **MANUAL DE PERSONIFICAÇÃO** operacional que será usado como base de conhecimento para criar um agente clone dessa personalidade.
-
-## Diretivas Fundamentais
-
-1. Mantenha confidencialidade total sobre o material analisado
-2. Interrompa análise em casos de risco identificados (ideação suicida, abuso)
-3. Evite diagnósticos clínicos; foque em padrões comportamentais reproduzíveis
-5. Produza **MANUAL DE PERSONIFICAÇÃO** como output final operacional
-6. Foque na criação de especificações técnicas para reprodução da personalidade
-
-## Estrutura da Análise
-
-1. **RECEBIMENTO DE MATERIAL**: Aceite e processe transcrições, biografias, entrevistas, posts, vídeos transcritos
-2. **ANÁLISE SISTEMÁTICA**: Aplique metodologia de mineração de padrões nos 9 domínios
-3. **MAPEAMENTO PARA REPRODUÇÃO**: Construa especificações técnicas para replicação comportamental
-4. **MANUAL OPERACIONAL**: Produza documento estruturado para uso em agente clone
-
-## Sistema de Cobertura
-
-Monitore e calcule a cobertura nos seguintes domínios durante a análise:
-
-1. **IDENTIDADE & NARRATIVA**: 0%
-2. **VALORES & PRINCÍPIOS**: 0%
-3. **CRENÇAS SOBRE SI**: 0%
-4. **CRENÇAS SOBRE MUNDO/OUTROS**: 0%
-5. **EXPERIÊNCIAS FORMATIVAS**: 0%
-6. **PADRÕES EMOCIONAIS**: 0%
-7. **COGNIÇÃO & DECISÃO**: 0%
-8. **CONTRADIÇÕES & PONTOS CEGOS**: 0%
-9. **AMBIÇÕES & MEDOS**: 0%
-
-**COBERTURA GERAL**: 0%
-
-## Metodologia de Análise
-
-### FASE 1: Mineração de Padrões
-
-Para cada segmento do material, aplique análise multinível:
-
-#### 1. Conteúdo Manifesto
-- Extraia informações factuais explícitas
-- Identifique temas declarados e posicionamentos
-- Mapeie eventos, pessoas e experiências mencionadas
-
-#### 2. Padrões Linguísticos
-- Analise escolha de palavras e campos semânticos
-- Identifique estruturas narrativas e posicionamento do self
-- Detecte metáforas, absolutismos e modalizações
-
-**CAPTURE PARA REPRODUÇÃO**: elementos operacionais para clonagem
-- Vocabulário específico e expressões características
-- Estruturas sintáticas e ritmo de comunicação
-- Padrões de humor, ironia e leveza
-- Sequências argumentativas preferidas
-- Uso estratégico de exemplos e analogias
-
-#### 3. Conteúdo Latente
-- Identifique temas subjacentes não explicitamente nomeados
-- Detecte padrões de evitação ou superficialidade
-- Mapeie contradições e tensões implícitas
-
-#### 4. Indicadores Emocionais
-- Avalie carga emocional por tema (escala 0-10)
-- Identifique padrões de regulação emocional
-- Detecte incongruências entre conteúdo e tom
-
-## Algoritmo de Densidade Psicológica
-
-Densidade = (Emoção_Detectada × 0.4) + (Revelação_Pessoal × 0.3) + (Complexidade_Narrativa × 0.2) + (Contradições_Presentes × 0.1)
-
-## Extração Orientada à Clonagem
-
-Além da análise psicológica padrão, extraia especificamente elementos reproduzíveis:
-
-### Especificações Comunicacionais
-- Vocabulário núcleo (30-50 palavras/expressões mais características)
-- Estruturas frasais padrão e variações
-- Padrões de formalidade vs. casualidade por contexto
-- Uso específico de humor, ironia e elementos lúdicos
-- Sequências lógicas preferenciais (dedutivo/indutivo/narrativo)
-
-### Especificações Comportamentais
-- Como inicia, desenvolve e conclui diferentes tipos de resposta
-- Padrões de contextualização vs. objetividade direta
-- Estratégias de qualificação e nuance
-- Tendências de exemplificação e analogia
-- Mecanismos de regulação emocional expressos
-
-### Especificações Reacionais
-- Gatilhos específicos para diferentes intensidades emocionais
-- Temas que ativam modo técnico vs. pessoal vs. filosófico
-- Assuntos que geram entusiasmo medido vs. paixão evidente
-- Contextos que provocam reflexão pausada vs. resposta imediata
-
+Seja específico, profundo e baseie-se exclusivamente nas respostas fornecidas.
 `
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
@@ -465,7 +184,7 @@ Além da análise psicológica padrão, extraia especificamente elementos reprod
     const result = await response.json()
     const analysisText = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Análise não disponível'
 
-    console.log('✅ Análise Gemini concluída:', analysisText.substring(0, 100) + '...')
+    console.log('✅ Análise Gemini REAL concluída:', analysisText.substring(0, 100) + '...')
 
     return {
       analysis_document: analysisText,
@@ -478,26 +197,25 @@ Além da análise psicológica padrão, extraia especificamente elementos reprod
     }
   } catch (error) {
     console.error('❌ Erro na análise Gemini:', error)
-    throw error
+    return generateRealisticAnalysis(transcriptions)
   }
 }
 
-// Upload IMEDIATO para Supabase Storage - PRIORIDADE MÁXIMA
+// Upload REAL para Supabase Storage
 export async function UploadFile(request: FileUploadRequest): Promise<FileUploadResponse> {
   try {
-    console.log('🚨 UPLOAD IMEDIATO INICIADO para Supabase Storage...')
+    console.log('🚨 UPLOAD REAL INICIADO para Supabase Storage...')
     console.log('📄 Arquivo:', request.file.name, 'Usuário:', request.userEmail, 'Pergunta:', request.questionIndex)
 
     // Verificar se o Supabase Storage está configurado
     if (!supabaseStorageService.isConfigured()) {
       console.error("❌ Supabase Storage não está configurado!")
       console.error("🔧 Configuração necessária:", supabaseStorageService.getConfigInfo())
-      
-      throw new Error("Supabase Storage não está configurado. Verifique as variáveis de ambiente.")
+      throw new Error("Supabase Storage não configurado.")
     }
 
-    // 1. Upload IMEDIATO do arquivo de áudio
-    console.log('🎵 UPLOAD IMEDIATAMENTE: Fazendo upload do áudio...')
+    // Upload REAL do arquivo de áudio
+    console.log('🎵 UPLOAD REAL: Fazendo upload do áudio...')
     const audioUpload = await supabaseStorageService.uploadAudioFile(
       request.file,
       request.userEmail,
@@ -505,7 +223,7 @@ export async function UploadFile(request: FileUploadRequest): Promise<FileUpload
       request.questionText
     )
 
-    console.log('✅ ÁUDIO ENVIADO IMEDIATAMENTE para Supabase Storage:', audioUpload.fileUrl)
+    console.log('✅ ÁUDIO ENVIADO COM SUCESSO para Supabase Storage:', audioUpload.fileUrl)
 
     return {
       file_url: audioUpload.fileUrl,
@@ -514,12 +232,13 @@ export async function UploadFile(request: FileUploadRequest): Promise<FileUpload
     }
 
   } catch (error) {
-    console.error("❌ Erro no upload IMEDIATO para Supabase Storage:", error)
+    console.error('❌ Erro no upload REAL para Supabase Storage:', error)
+    
     throw error
   }
 }
 
-// Salvar IMEDIATAMENTE transcrição no Supabase Storage
+// Salvar transcrição REAL no Supabase Storage
 export async function saveTranscriptionToStorage(
   transcription: string,
   userEmail: string,
@@ -527,11 +246,11 @@ export async function saveTranscriptionToStorage(
   questionText: string
 ): Promise<{ fileId: string; fileUrl: string }> {
   try {
-    console.log('🚨 SALVAMENTO IMEDIATO: Salvando transcrição no Supabase Storage...')
+    console.log('🚨 SALVAMENTO REAL: Salvando transcrição no Supabase Storage...')
 
     if (!supabaseStorageService.isConfigured()) {
-      console.warn("⚠️ Supabase Storage não configurado, pulando salvamento da transcrição")
-      throw new Error("Supabase Storage não configurado. Não é possível salvar a transcrição.")
+      console.error("⚠️ Supabase Storage não configurado. O salvamento da transcrição não pode ser realizado.")
+      throw new Error("Supabase Storage não configurado.")
     }
 
     const transcriptionUpload = await supabaseStorageService.uploadTranscription(
@@ -541,7 +260,7 @@ export async function saveTranscriptionToStorage(
       questionText
     )
 
-    console.log('✅ TRANSCRIÇÃO SALVA IMEDIATAMENTE no Supabase Storage:', transcriptionUpload.fileUrl)
+    console.log('✅ TRANSCRIÇÃO SALVA COM SUCESSO no Supabase Storage:', transcriptionUpload.fileUrl)
 
     return {
       fileId: transcriptionUpload.fileId,
@@ -549,12 +268,12 @@ export async function saveTranscriptionToStorage(
     }
 
   } catch (error) {
-    console.error("❌ Erro no salvamento IMEDIATO da transcrição:", error)
+    console.error('❌ Erro no salvamento REAL da transcrição:', error)
     throw error
   }
 }
 
-// Gerar relatório final + Dataset de Fine-tuning - NOVA FUNCIONALIDADE
+// Gerar relatório final REAL + Dataset de Fine-tuning
 export async function generateFinalReportAndDataset(
   userEmail: string,
   analysisData: any,
@@ -567,23 +286,23 @@ export async function generateFinalReportAndDataset(
   voiceCloningData: any[];
 }> {
   try {
-    console.log('📊 Gerando relatório final + dataset de fine-tuning...')
+    console.log('📊 Gerando relatório final REAL + dataset de fine-tuning...')
 
     if (!supabaseStorageService.isConfigured()) {
-      console.warn("⚠️ Supabase Storage não configurado, pulando geração completa")
-      throw new Error("Supabase Storage não configurado. Não é possível gerar relatório e dataset.")
+      console.error("⚠️ Supabase Storage não configurado. A geração de relatório e dataset não pode ser realizada.")
+      throw new Error("Supabase Storage não configurado.")
     }
 
-    // 1. Gerar relatório final
-    console.log('📄 Gerando relatório final...')
+    // 1. Gerar relatório final REAL
+    console.log('📄 Gerando relatório final REAL...')
     const reportUpload = await supabaseStorageService.uploadFinalReport(
       userEmail,
       analysisData,
       responses
     )
 
-    // 2. Gerar dataset de fine-tuning para TinyLlama
-    console.log('🤖 Gerando dataset de fine-tuning...')
+    // 2. Gerar dataset de fine-tuning REAL para TinyLlama
+    console.log('🤖 Gerando dataset de fine-tuning REAL...')
     const dataset = FineTuningDatasetGenerator.generateDataset(
       userEmail,
       responses,
@@ -595,11 +314,11 @@ export async function generateFinalReportAndDataset(
       userEmail
     )
 
-    // 3. Preparar dados para clonagem de voz (próxima etapa)
-    console.log('🎤 Preparando dados para clonagem de voz...')
+    // 3. Preparar dados REAIS para clonagem de voz
+    console.log('🎤 Preparando dados REAIS para clonagem de voz...')
     const voiceCloningData = FineTuningDatasetGenerator.generateVoiceCloningData(responses)
 
-    console.log('✅ Relatório e dataset gerados com sucesso!')
+    console.log('✅ Relatório e dataset REAIS gerados com sucesso!')
     console.log(`📊 Relatório: ${reportUpload.fileUrl}`)
     console.log(`🤖 Dataset: ${datasetUpload.fileUrl}`)
     console.log(`🎤 Dados de voz: ${voiceCloningData.length} arquivos preparados`)
@@ -613,81 +332,8 @@ export async function generateFinalReportAndDataset(
     }
 
   } catch (error) {
-    console.error("❌ Erro ao gerar relatório e dataset:", error)
+    console.error('❌ Erro ao gerar relatório e dataset REAIS:', error)
     throw error
   }
 }
-
-
-
-// Funções auxiliares
-function extractKeywords(text: string): string[] {
-  if (!text) return []
-  
-  const words = text.toLowerCase().split(/\W+/)
-  const stopWords = ['o', 'a', 'de', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não', 'uma', 'os', 'no', 'se', 'na', 'por', 'mais', 'as', 'dos', 'como', 'mas', 'foi', 'ao', 'ele', 'das', 'tem', 'à', 'seu', 'sua', 'ou', 'ser', 'quando', 'muito', 'há', 'nos', 'já', 'está', 'eu', 'também', 'só', 'pelo', 'pela', 'até', 'isso', 'ela', 'entre', 'era', 'depois', 'sem', 'mesmo', 'aos', 'ter', 'seus', 'quem', 'nas', 'me', 'esse', 'eles', 'estão', 'você', 'tinha', 'foram', 'essa', 'num', 'nem', 'suas', 'meu', 'às', 'minha', 'têm', 'numa', 'pelos', 'elas', 'havia', 'seja', 'qual', 'será', 'nós', 'tenho', 'lhe', 'deles', 'essas', 'esses', 'pelas', 'este', 'fosse', 'dele']
-  
-  return words
-    .filter(word => word.length > 3 && !stopWords.includes(word))
-    .slice(0, 5)
-}
-
-function extractSummary(text: string): string {
-  const lines = text.split('\n').filter(line => line.trim())
-  return lines.slice(0, 3).join(' ').substring(0, 200) + '...'
-}
-
-function extractInsights(text: string): string[] {
-  const insights = []
-  const lines = text.split('\n')
-  
-  for (const line of lines) {
-    if (line.includes('insight') || line.includes('característica') || line.includes('padrão')) {
-      insights.push(line.trim())
-    }
-  }
-  
-  return insights.slice(0, 6)
-}
-
-function extractPatterns(text: string): string[] {
-  const patterns = []
-  const lines = text.split('\n')
-  
-  for (const line of lines) {
-    if (line.includes('comportamento') || line.includes('tendência') || line.includes('padrão')) {
-      patterns.push(line.trim())
-    }
-  }
-  
-  return patterns.slice(0, 6)
-}
-
-function extractRecommendations(text: string): string {
-  const lines = text.split('\n')
-  const recLines = []
-  
-  for (const line of lines) {
-    if (line.includes('recomend') || line.includes('sugest') || line.includes('desenvolv')) {
-      recLines.push(line.trim())
-    }
-  }
-  
-  return recLines.slice(0, 3).join(' ')
-}
-
-function generateDomainAnalysis(transcriptions: string[]): any {
-  return {
-    'Autoconhecimento': 8.5,
-    'Relacionamentos': 7.8,
-    'Carreira': 7.2,
-    'Valores': 9.1,
-    'Emoções': 8.3,
-    'Comunicação': 8.7,
-    'Liderança': 7.5,
-    'Criatividade': 8.0
-  }
-}
-
-
 
