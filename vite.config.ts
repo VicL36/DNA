@@ -22,7 +22,8 @@ export default defineConfig({
       'dnav1.up.railway.app',
       '.railway.app',
       '.up.railway.app',
-      '3000-ib5ju059t6m5xshrl4goh-85028021.manusvm.computer'
+      '.manusvm.computer',
+      '3000-i7bfazcyrhpdh2di64jhw-5e549bae.manusvm.computer'
     ]
   },
   preview: {
@@ -34,7 +35,8 @@ export default defineConfig({
       'dnav1.up.railway.app',
       '.railway.app',
       '.up.railway.app',
-      '3000-ib5ju059t6m5xshrl4goh-85028021.manusvm.computer'
+      '.manusvm.computer',
+      '3000-i7bfazcyrhpdh2di64jhw-5e549bae.manusvm.computer'
     ]
   },
   build: {
@@ -54,5 +56,3 @@ export default defineConfig({
   envDir: './',
   envPrefix: 'VITE_'
 });
-
-

@@ -34,27 +34,81 @@ export class SupabaseStorageService {
     return `users/${sanitizedEmail}`
   }
 
-  // Upload de arquivo de áudio
-  async uploadAudioFile(
-    file: File, 
-    userEmail: string, 
+  // Upload de arquivo genérico
+  async uploadFile(
+    file: File,
+    userEmail: string,
     questionIndex: number,
     questionText: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
+      console.log('📤 Iniciando upload de arquivo genérico para Supabase Storage...')
       console.log('📄 Arquivo:', file.name, 'Tamanho:', file.size, 'bytes')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const fileName = `Q${questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
+      const fileName = `Q${questionIndex.toString().padStart(3, '0')}_${file.name}_${timestamp}`
+      const filePath = `${userFolderPath}/files/${fileName}`
+
+      console.log('📤 Fazendo upload do arquivo para:', filePath)
+
+      const { data, error } = await supabase.storage
+        .from(this.config.bucketName)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        })
+
+      if (error) {
+        console.error('❌ Erro no upload do arquivo:', error)
+        throw new Error(`Erro no upload do arquivo: ${error.message}`)
+      }
+
+      // Obter URL pública do arquivo
+      const { data: publicUrlData } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      console.log('✅ Arquivo enviado com sucesso para Supabase Storage!')
+      console.log('📁 Path:', data.path)
+      console.log('🔗 URL:', publicUrlData.publicUrl)
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
+      }
+
+    } catch (error) {
+      console.error('❌ Erro no upload do arquivo:', error)
+      throw new Error(`Falha no upload do arquivo: ${error.message}`)
+    }
+  }
+
+  // Upload de arquivo de áudio
+  async uploadAudioFile(request: {
+    file: File,
+    userEmail: string,
+    questionIndex: number,
+    questionText: string
+  }): Promise<StorageUploadResponse> {
+    try {
+      console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
+      console.log('📄 Arquivo:', request.file.name, 'Tamanho:', request.file.size, 'bytes')
+
+      const userFolderPath = this.getUserFolderPath(request.userEmail)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
       const filePath = `${userFolderPath}/audio/${fileName}`
 
       console.log('📤 Fazendo upload do áudio para:', filePath)
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, file, {
+        .upload(filePath, request.file, {
           cacheControl: '3600',
           upsert: false,
           contentType: 'audio/wav'
@@ -209,101 +263,44 @@ Gerado automaticamente pelo DNA UP Platform
     }
   }
 
-  // Upload do relatório final
+  // Upload do relatório final em PDF
   async uploadFinalReport(
     userEmail: string,
     analysisData: any,
     responses: any[]
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('📊 Gerando relatório final completo...')
+      console.log('📊 Gerando relatório final em PDF...')
+
+      // Importar o gerador de PDF dinamicamente
+      const { PDFReportGenerator } = await import('./PDFReportGenerator')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const fileName = `DNA_UP_RELATORIO_COMPLETO_${timestamp}.txt`
+      const fileName = `DNA_UP_RELATORIO_COMPLETO_${timestamp}.pdf`
       const filePath = `${userFolderPath}/reports/${fileName}`
       
-      const content = `
-# DNA UP - RELATÓRIO DE ANÁLISE PSICOLÓGICA COMPLETA
+      // Gerar PDF
+      const pdfBlob = await PDFReportGenerator.generateReport({
+        userEmail,
+        analysisData,
+        responses,
+        timestamp: new Date().toISOString()
+      })
 
-**Data:** ${new Date().toLocaleString('pt-BR')}
-**Usuário:** ${userEmail}
-**Total de Respostas:** ${responses.length}
-**Protocolo:** Clara R. - 108 Perguntas Estratégicas
-
----
-
-## ANÁLISE PSICOLÓGICA
-
-${analysisData.analysis_document || 'Análise em processamento...'}
-
----
-
-## RESUMO EXECUTIVO
-
-${analysisData.personality_summary || 'Resumo em processamento...'}
-
----
-
-## INSIGHTS PRINCIPAIS
-
-${analysisData.key_insights?.map((insight, i) => `${i + 1}. ${insight}`).join('\n') || 'Insights em processamento...'}
-
----
-
-## PADRÕES COMPORTAMENTAIS
-
-${analysisData.behavioral_patterns?.map((pattern, i) => `${i + 1}. ${pattern}`).join('\n') || 'Padrões em processamento...'}
-
----
-
-## RECOMENDAÇÕES
-
-${analysisData.recommendations || 'Recomendações em processamento...'}
-
----
-
-## ANÁLISE POR DOMÍNIO
-
-${Object.entries(analysisData.domain_analysis || {}).map(([domain, score]) => `**${domain}:** ${score}`).join('\n')}
-
----
-
-## RESPOSTAS DETALHADAS
-
-${responses.map((response, i) => `
-### PERGUNTA ${response.question_index}
-**Domínio:** ${response.question_domain}
-**Pergunta:** ${response.question_text}
-**Resposta:** ${response.transcript_text || 'Transcrição não disponível'}
-**Duração:** ${Math.round(response.audio_duration || 0)}s
-**Data:** ${new Date(response.created_at).toLocaleString('pt-BR')}
-
----
-`).join('\n')}
-
----
-
-**Relatório gerado automaticamente pelo DNA UP Platform**
-**Deep Narrative Analysis - Protocolo Clara R.**
-**© 2024 DNA UP - Todos os direitos reservados**
-`
-
-      const blob = new Blob([content], { type: 'text/plain; charset=utf-8' })
-
-      console.log('📤 Fazendo upload do relatório final para:', filePath)
+      console.log('📤 Fazendo upload do relatório PDF para:', filePath)
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, blob, {
+        .upload(filePath, pdfBlob, {
           cacheControl: '3600',
           upsert: false,
-          contentType: 'text/plain'
+          contentType: 'application/pdf'
         })
 
       if (error) {
-        console.error('❌ Erro no upload do relatório:', error)
-        throw new Error(`Erro no upload do relatório: ${error.message}`)
+        console.error('❌ Erro no upload do relatório PDF:', error)
+        throw new Error(`Erro no upload do relatório PDF: ${error.message}`)
       }
 
       // Obter URL pública do arquivo
@@ -311,7 +308,7 @@ ${responses.map((response, i) => `
         .from(this.config.bucketName)
         .getPublicUrl(filePath)
 
-      console.log('✅ Relatório final enviado com sucesso!')
+      console.log('✅ Relatório PDF enviado com sucesso!')
       console.log('📁 Path:', data.path)
 
       return {
@@ -323,8 +320,8 @@ ${responses.map((response, i) => `
       }
 
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório final:', error)
-      throw new Error(`Falha ao gerar relatório: ${error.message}`)
+      console.error('❌ Erro ao gerar relatório PDF:', error)
+      throw new Error(`Falha ao gerar relatório PDF: ${error.message}`)
     }
   }
 
