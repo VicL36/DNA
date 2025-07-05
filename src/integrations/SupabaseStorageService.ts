@@ -34,7 +34,6 @@ export class SupabaseStorageService {
    * @returns {string} O caminho da pasta do usuário.
    */
   private getUserFolderPath(userEmail: string): string {
-    // Adiciona uma verificação para garantir que userEmail não seja nulo ou indefinido.
     if (!userEmail) {
       console.error("Erro Crítico: userEmail não foi fornecido para gerar o caminho da pasta.");
       throw new Error("userEmail é nulo ou indefinido. Impossível continuar com a operação de armazenamento.");
@@ -56,15 +55,13 @@ export class SupabaseStorageService {
   }): Promise<StorageUploadResponse> {
     try {
       console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
-      
       const userFolderPath = this.getUserFolderPath(request.userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
       const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
       const filePath = `${userFolderPath}/audio/${fileName}`
 
-      // Cria um objeto File a partir do Blob, fornecendo um nome de arquivo.
       const audioFile = new File([request.audioBlob], fileName, { type: 'audio/wav' });
-      
+
       console.log('📄 Arquivo:', audioFile.name, 'Tamanho:', audioFile.size, 'bytes')
       console.log('📤 Fazendo upload do áudio para:', filePath)
 
