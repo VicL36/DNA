@@ -83,7 +83,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
       transcription: transcript || 'Não foi possível transcrever o áudio.',
       duration_seconds: duration,
       confidence_score: confidence,
-      emotional_tone: 'neutral', // Pode ser aprimorado com análise de tom
+      emotional_tone: 'neutral',
       keywords: extractKeywords(transcript)
     }
   } catch (error) {
@@ -407,7 +407,7 @@ Monitore e calcule a cobertura nos seguintes domínios durante a análise, preen
       key_insights: extractInsights(analysisText),
       behavioral_patterns: extractPatterns(analysisText),
       recommendations: extractRecommendations(analysisText),
-      confidence_score: 0.90, // Pode ser aprimorado
+      confidence_score: 0.90,
       domain_analysis: extractDomainAnalysis(analysisText)
     }
   } catch (error) {
@@ -434,12 +434,12 @@ export async function UploadFile(request: FileUploadRequest): Promise<FileUpload
     }
 
     console.log('🎵 UPLOAD IMEDIATAMENTE: Fazendo upload do áudio...')
-    const audioUpload = await supabaseStorageService.uploadAudioFile(
-      request.file,
-      request.userEmail,
-      request.questionIndex,
-      request.questionText
-    )
+    const audioUpload = await supabaseStorageService.uploadAudioFile({
+      audioBlob: request.file,
+      userEmail: request.userEmail,
+      questionIndex: request.questionIndex,
+      questionText: request.questionText
+    })
 
     console.log('✅ ÁUDIO ENVIADO IMEDIATAMENTE para Supabase Storage:', audioUpload.fileUrl)
 
@@ -574,7 +574,7 @@ function extractKeywords(text: string): string[] {
   
   return words
     .filter(word => word.length > 3 && !stopWords.includes(word))
-    .slice(0, 10) // Aumentado para 10
+    .slice(0, 10)
 }
 
 function extractSection(text: string, sectionTitle: string): string {
@@ -588,7 +588,6 @@ function extractList(text: string, sectionTitle: string): string[] {
     if (section.startsWith('Seção')) return [];
     return section.split('\n').map(item => item.replace(/^-/, '').trim()).filter(Boolean);
 }
-
 
 function extractSummary(text: string): string {
   return extractSection(text, "Resumo do Perfil Psicológico");
