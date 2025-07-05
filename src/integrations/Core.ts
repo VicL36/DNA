@@ -1,4 +1,4 @@
-// Integrações REAIS para DNA UP Platform - UPLOAD IMEDIATO
+// Integrações REAIS para DNA UP Platform
 import { supabaseStorageService } from './SupabaseStorageService'
 import { FineTuningDatasetGenerator } from './FineTuningDatasetGenerator'
 
@@ -14,7 +14,7 @@ export interface LLMResponse {
   personality_summary?: string
   key_insights?: string[]
   behavioral_patterns?: string[]
-  recommendations?: string[]
+  recommendations?: string
   duration_seconds?: number
   confidence_score?: number
   emotional_tone?: string
@@ -35,10 +35,13 @@ export interface FileUploadResponse {
   storage_file_id: string
   transcription_file_id?: string
   transcription_url?: string
-  publicUrl: string
 }
 
-// Transcrição real usando Deepgram
+/**
+ * Transcreve um arquivo de áudio usando a API do Deepgram.
+ * @param audioBlob O áudio a ser transcrito.
+ * @returns Uma promessa que resolve com a resposta da LLM contendo a transcrição.
+ */
 export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
   try {
     const deepgramApiKey = import.meta.env.VITE_DEEPGRAM_API_KEY
@@ -70,7 +73,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
     const confidence = result.results?.channels?.[0]?.alternatives?.[0]?.confidence || 0
     const duration = result.metadata?.duration || 0
 
-    console.log('✅ Transcrição Deepgram concluída:', { 
+    console.log('✅ Transcrição Deepgram concluída:', {  
       transcript: transcript.substring(0, 50) + '...',
       confidence,
       duration 
@@ -80,7 +83,7 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
       transcription: transcript || 'Não foi possível transcrever o áudio.',
       duration_seconds: duration,
       confidence_score: confidence,
-      emotional_tone: 'neutral',
+      emotional_tone: 'neutral', // Pode ser aprimorado com análise de tom
       keywords: extractKeywords(transcript)
     }
   } catch (error) {
@@ -89,8 +92,12 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
   }
 }
 
-// Análise usando GEMINI
-export async function generateAnalysis(request: LLMRequest): Promise<LLMResponse> {
+/**
+ * Gera uma análise psicológica profunda usando a API do Gemini.
+ * @param transcriptions Um array de transcrições para analisar.
+ * @returns Uma promessa que resolve com a resposta da LLM contendo a análise completa.
+ */
+export async function generateAnalysis(transcriptions: string[]): Promise<LLMResponse> {
   try {
     const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
     
@@ -99,7 +106,252 @@ export async function generateAnalysis(request: LLMRequest): Promise<LLMResponse
     }
 
     console.log('🧠 Iniciando análise com Gemini AI...')
-    
+    const prompt = `
+# Análise Psicológica Profunda - Protocolo Clara R.
+
+Você é um engenheiro reverso de estilo textual com precisão nanométrica. Sua missão é desmontar, catalogar e replicar cada microelemento estrutural e psicológico de um texto, identificando até mesmo os padrões que o próprio autor aplica inconscientemente. Este processo será executado com o rigor de uma autópsia linguística:
+
+## Respostas para análise:
+${transcriptions.join("\n\n---\n\n")}
+
+## Metodologia de Análise:
+
+### FASE 1: Mineração de Padrões
+
+Para cada segmento do material, aplique análise multinível:
+
+#### 1. Conteúdo Manifesto
+- Extraia informações factuais explícitas
+- Identifique temas declarados e posicionamentos
+- Mapeie eventos, pessoas e experiências mencionadas
+
+#### 2. Padrões Linguísticos
+- Analise escolha de palavras e campos semânticos
+- Identifique estruturas narrativas e posicionamento do self
+- Detecte metáforas, absolutismos e modalizações
+
+**CAPTURE PARA REPRODUÇÃO**: elementos operacionais para clonagem
+- Vocabulário específico e expressões características
+- Estruturas sintáticas e ritmo de comunicação
+- Padrões de humor, ironia e leveza
+- Sequências argumentativas preferidas
+- Uso estratégico de exemplos e analogias
+
+#### 3. Conteúdo Latente
+- Identifique temas subjacentes não explicitamente nomeados
+- Detecte padrões de evitação ou superficialidade
+- Mapeie contradições e tensões implícitas
+
+#### 4. Indicadores Emocionais
+- Avalie carga emocional por tema (escala 0-10)
+- Identifique padrões de regulação emocional
+- Detecte incongruências entre conteúdo e tom
+
+## Algoritmo de Densidade Psicológica
+
+Densidade = (Emoção_Detectada × 0.4) + (Revelação_Pessoal × 0.3) + (Complexidade_Narrativa × 0.2) + (Contradições_Presentes × 0.1)
+
+## Extração Orientada à Clonagem
+
+Além da análise psicológica padrão, extraia especificamente elementos reproduzíveis:
+
+### Especificações Comunicacionais
+- Vocabulário núcleo (30-50 palavras/expressões mais características)
+- Estruturas frasais padrão e variações
+- Padrões de formalidade vs. casualidade por contexto
+- Uso específico de humor, ironia e elementos lúdicos
+- Sequências lógicas preferenciais (dedutivo/indutivo/narrativo)
+
+### Especificações Comportamentais
+- Como inicia, desenvolve e conclui diferentes tipos de resposta
+- Padrões de contextualização vs. objetividade direta
+- Estratégias de qualificação e nuance
+- Tendências de exemplificação e analogia
+- Mecanismos de regulação emocional expressos
+
+### Especificações Reacionais
+- Gatilhos específicos para diferentes intensidades emocionais
+- Temas que ativam modo técnico vs. pessoal vs. filosófico
+- Assuntos que geram entusiasmo medido vs. paixão evidente
+- Contextos que provocam reflexão pausada vs. resposta imediata
+
+## FASE 1: MICRODISSECAÇÃO ESTRUTURAL ATÔMICA
+
+### 1.1. ANATOMIA DE ABERTURA (PRIMEIROS 3 PARÁGRAFOS)
+- Primeira frase
+- Pattern de hook
+- Loop de abertura
+- Seed inicial
+- Promessa inaugural
+
+### 1.2. ARQUITETURA DE CORPO TEXTUAL
+- Matriz de parágrafos
+- Comprimento sentencial
+- Padrão de transição
+- Sequência de desenvolvimento
+- Densidade informacional
+
+### 1.3. MECÂNICA DE FECHAMENTO
+- Frases de conclusão
+- Técnica de fechamento de loop
+- Calls-to-action
+- Frase final
+
+### 1.4. ENGENHARIA DE TENSÃO
+- Loops abertos
+- Seeds estratégicos
+- Padrão de repetição
+- Estrutura de picos emocionais
+
+## FASE 2: MICROSCOPIA DA LINGUAGEM
+
+### 2.1. CARTOGRAFIA LÉXICA
+- Top 30 palavras não-funcionais
+- Índice de diversidade lexical
+- Comprimento médio de palavras
+- Distribuição gramatical
+- Incidência de neologismos
+
+### 2.2. MICROSCOPIA PERSUASIVA
+- Sequências persuasivas
+- Densidade de proof elements
+- Mecanismos de autoridade
+- Linguagem hipnótica
+- Dispositivos de polarização
+
+### 2.3. RADIOGRAFIA NARRATIVA
+- Estrutura de storytelling
+- Posicionamento de histórias
+- Arcos de transformação
+- Devices de identificação
+
+### 2.4. TOPOGRAFIA TIPOGRÁFICA
+- Espaços em branco
+- Padrões de formatação
+- Estruturas de lista
+- Enumerações
+
+## FASE 3: DECODIFICAÇÃO AVANÇADA
+
+### 3.1. LOOPS E TENSÃO
+- Mapa de loops
+- Taxonomia
+- Distância média
+- Loops aninhados
+
+### 3.2. SEMEADURA E COLHEITA
+- Registro de seeds
+- Mecânica de plantio
+- Tempo de germinação
+- Padrões de desenvolvimento
+
+### 3.3. INTENSIDADE EMOCIONAL
+- Mapa de intensidade
+- Gatilhos emocionais
+- Padrões de intensificação
+- Ritmo de release
+
+### 3.4. FLUXO DE IDEIAS
+- Ordem conceitual
+- Técnicas de linking
+- Método de contraste
+- Progressão de complexidade
+
+## FASE 4: ALGORITMO DE REPLICAÇÃO
+
+### 4.1. PROTOCOLO ESTRUTURAL
+
+### 4.2. PROTOCOLO LINGUÍSTICO
+
+### 4.3. PROTOCOLO PERSUASIVO
+
+## FASE 5: VALIDAÇÃO FORENSE
+
+### 5.1. ASSINATURA ESTILOMÉTRICA
+- Análise Burrows-Delta
+- Teste Juola
+- Índice Jaccard
+- Verificação autoral
+
+### 5.2. CHECKLIST NANOMÉTRICO
+- Conformidade estrutural
+- Fidelidade léxica
+- Calibragem tensão
+- Autenticidade dispositivos
+- Harmonia rítmica
+
+### 5.3. TESTE TURING
+- Detecção anomalias
+- Blind test
+- Medição cognitiva
+
+## PROTOCOLO FINAL
+
+1. Preparação
+   - Normalizar formato
+   - Quantificar extensão
+   - Identificar evolução
+
+2. Análise
+   - Fase 1: Estrutural
+   - Fase 2: Linguagem
+   - Fase 3: Técnicas
+
+3. Compilação
+   - Construir regras
+   - Calibrar parâmetros
+   - Testar amostra
+
+4. Validação
+   - Aplicar testes
+   - Identificar discrepâncias
+   - Documentar metaparâmetros
+
+## SAÍDA REQUERIDA
+
+Gere um relatório completo em markdown que siga a estrutura de análise acima, preenchendo cada item com a análise detalhada baseada nas respostas fornecidas. Além disso, no final do relatório, inclua a seção "Sistema de Cobertura" com as porcentagens preenchidas de acordo com a profundidade da análise possível em cada domínio.
+
+---
+# Extrator de DNA do Expert
+
+**Sistema especializado em análise profunda de personalidade e Agente exclusivo da Semana IA para Lançamentos**
+
+## Missão Principal
+
+Analisar materiais existentes (transcrições, biografias, entrevistas, posts, etc.) para extrair e mapear a essência psicológica completa do expert, produzindo um **MANUAL DE PERSONIFICAÇÃO** operacional que será usado como base de conhecimento para criar um agente clone dessa personalidade.
+
+## Diretivas Fundamentais
+
+1. Mantenha confidencialidade total sobre o material analisado
+2. Interrompa análise em casos de risco identificados (ideação suicida, abuso)
+3. Evite diagnósticos clínicos; foque em padrões comportamentais reproduzíveis
+5. Produza **MANUAL DE PERSONIFICAÇÃO** como output final operacional
+6. Foque na criação de especificações técnicas para reprodução da personalidade
+
+## Estrutura da Análise
+
+1. **RECEBIMENTO DE MATERIAL**: Aceite e processe transcrições, biografias, entrevistas, posts, vídeos transcritos
+2. **ANÁLISE SISTEMÁTICA**: Aplique metodologia de mineração de padrões nos 9 domínios
+3. **MAPEAMENTO PARA REPRODUÇÃO**: Construa especificações técnicas para replicação comportamental
+4. **MANUAL OPERACIONAL**: Produza documento estruturado para uso em agente clone
+
+## Sistema de Cobertura
+
+Monitore e calcule a cobertura nos seguintes domínios durante a análise, preenchendo as porcentagens:
+
+1. **IDENTIDADE & NARRATIVA**: 0%
+2. **VALORES & PRINCÍPIOS**: 0%
+3. **CRENÇAS SOBRE SI**: 0%
+4. **CRENÇAS SOBRE MUNDO/OUTROS**: 0%
+5. **EXPERIÊNCIAS FORMATIVAS**: 0%
+6. **PADRÕES EMOCIONAIS**: 0%
+7. **COGNIÇÃO & DECISÃO**: 0%
+8. **CONTRADIÇÕES & PONTOS CEGOS**: 0%
+9. **AMBIÇÕES & MEDOS**: 0%
+
+**COBERTURA GERAL**: 0%
+`
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
@@ -108,7 +360,7 @@ export async function generateAnalysis(request: LLMRequest): Promise<LLMResponse
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: request.prompt
+            text: prompt
           }]
         }],
         generationConfig: {
@@ -149,30 +401,14 @@ export async function generateAnalysis(request: LLMRequest): Promise<LLMResponse
 
     console.log('✅ Análise Gemini concluída:', analysisText.substring(0, 100) + '...')
 
-    // Tentar parsear JSON se um schema for fornecido
-    if (request.response_json_schema) {
-      try {
-        const jsonMatch = analysisText.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          const parsedResponse = JSON.parse(jsonMatch[0])
-          return {
-            ...parsedResponse,
-            confidence_score: 0.90
-          }
-        }
-      } catch (jsonError) {
-        console.warn('⚠️ Não foi possível parsear JSON, retornando análise como texto')
-      }
-    }
-
     return {
       analysis_document: analysisText,
       personality_summary: extractSummary(analysisText),
       key_insights: extractInsights(analysisText),
       behavioral_patterns: extractPatterns(analysisText),
       recommendations: extractRecommendations(analysisText),
-      confidence_score: 0.90,
-      domain_analysis: generateDomainAnalysis([analysisText])
+      confidence_score: 0.90, // Pode ser aprimorado
+      domain_analysis: extractDomainAnalysis(analysisText)
     }
   } catch (error) {
     console.error('❌ Erro na análise Gemini:', error)
@@ -180,28 +416,37 @@ export async function generateAnalysis(request: LLMRequest): Promise<LLMResponse
   }
 }
 
-// Upload IMEDIATO para Supabase Storage - PRIORIDADE MÁXIMA
+/**
+ * Faz o upload de um arquivo para o Supabase Storage.
+ * @param request O pedido de upload de arquivo.
+ * @returns Uma promessa que resolve com a resposta do upload.
+ */
 export async function UploadFile(request: FileUploadRequest): Promise<FileUploadResponse> {
   try {
     console.log('🚨 UPLOAD IMEDIATO INICIADO para Supabase Storage...')
     console.log('📄 Arquivo:', request.file.name, 'Usuário:', request.userEmail, 'Pergunta:', request.questionIndex)
 
-    // 1. Upload IMEDIATO do arquivo de áudio
-    console.log('🎵 UPLOAD IMEDIATAMENTE: Fazendo upload do áudio...')
-    const audioUpload = await supabaseStorageService.uploadAudioFile({
-      file: request.file,
-      userEmail: request.userEmail,
-      questionIndex: request.questionIndex,
-      questionText: request.questionText
-    })
+    if (!supabaseStorageService.isConfigured()) {
+      console.error("❌ Supabase Storage não está configurado!")
+      console.error("🔧 Configuração necessária:", supabaseStorageService.getConfigInfo())
+      
+      throw new Error("Supabase Storage não está configurado. Verifique as variáveis de ambiente.")
+    }
 
-    console.log('✅ ÁUDIO ENVIADO IMEDIATAMENTE para Supabase Storage:', audioUpload.publicUrl)
+    console.log('🎵 UPLOAD IMEDIATAMENTE: Fazendo upload do áudio...')
+    const audioUpload = await supabaseStorageService.uploadAudioFile(
+      request.file,
+      request.userEmail,
+      request.questionIndex,
+      request.questionText
+    )
+
+    console.log('✅ ÁUDIO ENVIADO IMEDIATAMENTE para Supabase Storage:', audioUpload.fileUrl)
 
     return {
-      file_url: audioUpload.publicUrl,
+      file_url: audioUpload.fileUrl,
       file_id: audioUpload.fileId,
-      storage_file_id: audioUpload.fileId,
-      publicUrl: audioUpload.publicUrl
+      storage_file_id: audioUpload.fileId
     }
 
   } catch (error) {
@@ -210,7 +455,14 @@ export async function UploadFile(request: FileUploadRequest): Promise<FileUpload
   }
 }
 
-// Salvar IMEDIATAMENTE transcrição no Supabase Storage
+/**
+ * Salva a transcrição no Supabase Storage.
+ * @param transcription A string de transcrição.
+ * @param userEmail O email do usuário.
+ * @param questionIndex O índice da pergunta.
+ * @param questionText O texto da pergunta.
+ * @returns Uma promessa que resolve com o ID e URL do arquivo.
+ */
 export async function saveTranscriptionToStorage(
   transcription: string,
   userEmail: string,
@@ -220,73 +472,100 @@ export async function saveTranscriptionToStorage(
   try {
     console.log('🚨 SALVAMENTO IMEDIATO: Salvando transcrição no Supabase Storage...')
 
-    // Criar um blob com a transcrição
-    const transcriptionBlob = new Blob([transcription], { type: 'text/plain' })
-    const transcriptionFile = new File([transcriptionBlob], `transcricao_q${questionIndex}.txt`, { type: 'text/plain' })
+    if (!supabaseStorageService.isConfigured()) {
+      console.warn("⚠️ Supabase Storage não configurado, pulando salvamento da transcrição")
+      throw new Error("Supabase Storage não configurado. Não é possível salvar a transcrição.")
+    }
 
-    const transcriptionUpload = await supabaseStorageService.uploadFile(
-      transcriptionFile,
+    const transcriptionUpload = await supabaseStorageService.uploadTranscription(
+      transcription,
       userEmail,
       questionIndex,
       questionText
     )
 
-    console.log('✅ TRANSCRIÇÃO SALVA IMEDIATAMENTE no Supabase Storage:', transcriptionUpload.publicUrl)
+    console.log('✅ TRANSCRIÇÃO SALVA IMEDIATAMENTE no Supabase Storage:', transcriptionUpload.fileUrl)
 
     return {
       fileId: transcriptionUpload.fileId,
-      fileUrl: transcriptionUpload.publicUrl
+      fileUrl: transcriptionUpload.fileUrl
     }
+
   } catch (error) {
     console.error("❌ Erro no salvamento IMEDIATO da transcrição:", error)
     throw error
   }
 }
 
-// Gerar relatório final + Dataset de Fine-tuning - NOVA FUNCIONALIDADE
+/**
+ * Gera o relatório final e o dataset de fine-tuning.
+ * @param userEmail O email do usuário.
+ * @param analysisData Os dados da análise.
+ * @param responses As respostas do usuário.
+ * @returns Uma promessa que resolve com os IDs e URLs dos arquivos gerados e dados para clonagem de voz.
+ */
 export async function generateFinalReportAndDataset(
   userEmail: string,
-  analysisResult: any,
+  analysisData: any,
   responses: any[]
-): Promise<{ reportFileUrl: string, datasetFileUrl: string, voiceCloningData: any[] }> {
+): Promise<{ 
+  reportFileId: string; 
+  reportFileUrl: string;
+  datasetFileId: string;
+  datasetFileUrl: string;
+  voiceCloningData: any[];
+}> {
   try {
-    console.log("📊 Gerando dataset de fine-tuning...")
+    console.log('📊 Gerando relatório final + dataset de fine-tuning...')
 
-    // Gerar dataset de fine-tuning
-    await FineTuningDatasetGenerator.generate(
-      analysisResult.sessionId || "",
-      userEmail,
-      analysisResult.question || "",
-      analysisResult.userResponse || "",
-      analysisResult // Passar o objeto analysisResult completo
-    )
+    if (!supabaseStorageService.isConfigured()) {
+      console.warn("⚠️ Supabase Storage não configurado, pulando geração completa")
+      throw new Error("Supabase Storage não configurado. Não é possível gerar relatório e dataset.")
+    }
 
-    console.log("✅ Dataset de fine-tuning gerado com sucesso!")
-
-    // Gerar relatório final em PDF
+    console.log('📄 Gerando relatório final...')
     const reportUpload = await supabaseStorageService.uploadFinalReport(
       userEmail,
-      analysisResult,
+      analysisData,
       responses
     )
 
-    console.log("✅ Relatório final em PDF gerado e enviado com sucesso!")
+    console.log('🤖 Gerando dataset de fine-tuning...')
+    const dataset = FineTuningDatasetGenerator.generateDataset(
+      userEmail,
+      responses,
+      analysisData
+    )
+
+    const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
+      dataset,
+      userEmail
+    )
+
+    console.log('🎤 Preparando dados para clonagem de voz...')
+    const voiceCloningData = FineTuningDatasetGenerator.generateVoiceCloningData(responses)
+
+    console.log('✅ Relatório e dataset gerados com sucesso!')
+    console.log(`📊 Relatório: ${reportUpload.fileUrl}`)
+    console.log(`🤖 Dataset: ${datasetUpload.fileUrl}`)
+    console.log(`🎤 Dados de voz: ${voiceCloningData.length} arquivos preparados`)
 
     return {
-      reportFileUrl: reportUpload.publicUrl,
-      datasetFileUrl: "URL_DO_DATASET_AQUI", // TODO: Obter URL real do dataset
-      voiceCloningData: [] // TODO: Implementar coleta de dados para voice cloning
+      reportFileId: reportUpload.fileId,
+      reportFileUrl: reportUpload.fileUrl,
+      datasetFileId: datasetUpload.fileId,
+      datasetFileUrl: datasetUpload.fileUrl,
+      voiceCloningData: voiceCloningData
     }
 
   } catch (error) {
-    console.error("❌ Erro ao gerar relatório final e dataset:", error)
+    console.error("❌ Erro ao gerar relatório e dataset:", error)
     throw error
   }
 }
 
-
-
 // Funções auxiliares
+
 function extractKeywords(text: string): string[] {
   if (!text) return []
   
@@ -295,65 +574,55 @@ function extractKeywords(text: string): string[] {
   
   return words
     .filter(word => word.length > 3 && !stopWords.includes(word))
-    .slice(0, 5)
+    .slice(0, 10) // Aumentado para 10
 }
 
+function extractSection(text: string, sectionTitle: string): string {
+    const regex = new RegExp(`## ${sectionTitle}\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim() : `Seção "${sectionTitle}" não encontrada.`;
+}
+
+function extractList(text: string, sectionTitle: string): string[] {
+    const section = extractSection(text, sectionTitle);
+    if (section.startsWith('Seção')) return [];
+    return section.split('\n').map(item => item.replace(/^-/, '').trim()).filter(Boolean);
+}
+
+
 function extractSummary(text: string): string {
-  const lines = text.split('\n').filter(line => line.trim())
-  return lines.slice(0, 3).join(' ').substring(0, 200) + '...'
+  return extractSection(text, "Resumo do Perfil Psicológico");
 }
 
 function extractInsights(text: string): string[] {
-  const insights = []
-  const lines = text.split('\n')
-  
-  for (const line of lines) {
-    if (line.includes('insight') || line.includes('característica') || line.includes('padrão')) {
-      insights.push(line.trim())
-    }
-  }
-  
-  return insights.slice(0, 6)
+  return extractList(text, "Key Insights");
 }
 
 function extractPatterns(text: string): string[] {
-  const patterns = []
-  const lines = text.split('\n')
-  
-  for (const line of lines) {
-    if (line.includes('comportamento') || line.includes('tendência') || line.includes('padrão')) {
-      patterns.push(line.trim())
-    }
-  }
-  
-  return patterns.slice(0, 6)
+  return extractList(text, "Padrões Comportamentais");
 }
 
-function extractRecommendations(text: string): string[] {
-  const lines = text.split('\n')
-  const recLines = []
-  
-  for (const line of lines) {
-    if (line.includes('recomend') || line.includes('sugest') || line.includes('desenvolv')) {
-      recLines.push(line.trim())
-    }
-  }
-  
-  return recLines.slice(0, 3)
+function extractRecommendations(text: string): string {
+  return extractSection(text, "Recomendações de Desenvolvimento");
 }
 
-function generateDomainAnalysis(transcriptions: string[]): any {
-  return {
-    'Autoconhecimento': 8.5,
-    'Relacionamentos': 7.8,
-    'Carreira': 7.2,
-    'Valores': 9.1,
-    'Emoções': 8.3,
-    'Comunicação': 8.7,
-    'Liderança': 7.5,
-    'Criatividade': 8.0
+function extractDomainAnalysis(text: string): any {
+  const domainScores: { [key: string]: number } = {};
+  const regex = /^\d+\.\s+([A-Z\s&ÇÃ-]+):\s+(\d+)%/gm;
+  let match;
+  
+  const domainSection = text.match(/## Sistema de Cobertura([\s\S]*?)(?=\n##|$)/i);
+  if (!domainSection) return {};
+
+  while ((match = regex.exec(domainSection[1])) !== null) {
+    const domainName = match[1].trim()
+      .toLowerCase()
+      .replace(/ & /g, '_')
+      .replace(/ /g, '_')
+      .replace('ç', 'c').replace('ã', 'a').replace('õ', 'o');
+    const score = parseInt(match[2], 10);
+    domainScores[domainName] = score;
   }
+  
+  return domainScores;
 }
-
-
-
