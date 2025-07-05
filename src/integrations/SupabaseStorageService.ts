@@ -1,3 +1,4 @@
+// Serviço REAL de Supabase Storage - DNA UP Platform - CORRIGIDO FINAL
 import { supabase } from '@/lib/supabase'
 
 export interface SupabaseStorageConfig {
@@ -18,43 +19,77 @@ export class SupabaseStorageService {
 
   constructor() {
     this.config = {
-      bucketName: import.meta.env.VITE_SUPABASE_BUCKET_NAME || 'dna-protocol-files',
+      bucketName: 'dna-protocol-files', // Bucket fixo criado via SQL
       baseUrl: import.meta.env.VITE_SUPABASE_URL || ''
     }
+
     console.log('🔧 Configurando Supabase Storage Service...')
     console.log('🪣 Bucket Name:', this.config.bucketName)
     console.log('🔗 Base URL:', this.config.baseUrl?.substring(0, 30) + '...')
   }
 
-  private getUserFolderPath(userEmail: string): string {
-    if (!userEmail) {
-      console.error("Erro Crítico: userEmail não fornecido para gerar o caminho da pasta.")
-      throw new Error("userEmail é nulo ou indefinido. Impossível continuar com a operação de armazenamento.")
+  // Verificar se o bucket existe (não criar, apenas verificar)
+  private async checkBucketExists(): Promise<boolean> {
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets()
+      
+      if (error) {
+        console.error('❌ Erro ao verificar buckets:', error)
+        return false
+      }
+
+      const bucketExists = buckets?.some(bucket => bucket.name === this.config.bucketName)
+      
+      if (bucketExists) {
+        console.log('✅ Bucket existe:', this.config.bucketName)
+        return true
+      } else {
+        console.error('❌ Bucket não existe:', this.config.bucketName)
+        console.error('🔧 Execute a migração SQL: supabase/migrations/20250630020001_fix_storage_setup.sql')
+        return false
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar bucket:', error)
+      return false
     }
-    const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_')
+  }
+
+  // Criar pasta para o usuário (estrutura de pastas no Storage)
+  private getUserFolderPath(userEmail: string): string {
+    const sanitizedEmail = userEmail.replace('@', '_').replace(/\./g, '_')
     return `users/${sanitizedEmail}`
   }
 
-  async uploadAudioFile(request: {
-    audioBlob: Blob,
-    userEmail: string,
+  // Upload de arquivo de áudio
+  async uploadAudioFile(
+    file: File, 
+    userEmail: string, 
     questionIndex: number,
     questionText: string
-  }): Promise<StorageUploadResponse> {
+  ): Promise<StorageUploadResponse> {
     try {
-      const userFolderPath = this.getUserFolderPath(request.userEmail)
+      console.log('🎵 Iniciando upload REAL de áudio para Supabase Storage...')
+      console.log('📄 Arquivo:', file.name, 'Tamanho:', file.size, 'bytes')
+
+      // Verificar se o bucket existe
+      const bucketExists = await this.checkBucketExists()
+      if (!bucketExists) {
+        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
+      }
+
+      const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
+      const fileName = `Q${questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
       const filePath = `${userFolderPath}/audio/${fileName}`
 
-      const audioFile = new File([request.audioBlob], fileName, { type: 'audio/wav' })
+      console.log('📤 Fazendo upload do áudio para:', filePath)
 
-      const { error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, audioFile, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: 'audio/wav'
+          contentType: file.type || 'audio/wav'
         })
 
       if (error) {
@@ -62,97 +97,71 @@ export class SupabaseStorageService {
         throw new Error(`Erro no upload do áudio: ${error.message}`)
       }
 
-      return this.buildUploadResponse(fileName, filePath)
-    } catch (err) {
-      throw new Error(`Falha ao enviar arquivo de áudio: ${err}`)
-    }
-  }
-
-  async uploadFinalReport(request: {
-    userEmail: string,
-    reportBlob: Blob,
-    reportType?: 'pdf' | 'txt'
-  }): Promise<StorageUploadResponse> {
-    try {
-      const userFolderPath = this.getUserFolderPath(request.userEmail)
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const type = request.reportType ?? 'pdf'
-      const fileName = `FINAL_REPORT_${timestamp}.${type}`
-      const filePath = `${userFolderPath}/reports/${fileName}`
-
-      const reportFile = new File([request.reportBlob], fileName, { type: type === 'pdf' ? 'application/pdf' : 'text/plain' })
-
-      const { error } = await supabase.storage
+      // Obter URL pública do arquivo
+      const { data: publicUrlData } = supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, reportFile, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: type === 'pdf' ? 'application/pdf' : 'text/plain'
-        })
+        .getPublicUrl(filePath)
 
-      if (error) {
-        console.error('❌ Erro no upload do relatório:', error)
-        throw new Error(`Erro no upload do relatório: ${error.message}`)
+      console.log('✅ Áudio enviado com sucesso para Supabase Storage!')
+      console.log('📁 Path:', data.path)
+      console.log('🔗 URL:', publicUrlData.publicUrl)
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
       }
 
-      return this.buildUploadResponse(fileName, filePath)
-    } catch (err) {
-      throw new Error(`Falha ao enviar relatório final: ${err}`)
+    } catch (error) {
+      console.error('❌ Erro no upload do áudio:', error)
+      throw new Error(`Falha no upload do áudio: ${error.message}`)
     }
   }
 
-  async uploadGenericFile(request: {
+  // Upload de transcrição
+  async uploadTranscription(
+    transcription: string,
     userEmail: string,
-    fileBlob: Blob,
-    fileName: string,
-    folder?: string,
-    mimeType?: string
-  }): Promise<StorageUploadResponse> {
-    try {
-      const userFolderPath = this.getUserFolderPath(request.userEmail)
-      const folderPath = request.folder ? `${userFolderPath}/${request.folder}` : userFolderPath
-      const filePath = `${folderPath}/${request.fileName}`
-
-      const file = new File([request.fileBlob], request.fileName, { type: request.mimeType || 'application/octet-stream' })
-
-      const { error } = await supabase.storage
-        .from(this.config.bucketName)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: request.mimeType || 'application/octet-stream'
-        })
-
-      if (error) {
-        console.error('❌ Erro no upload do arquivo:', error)
-        throw new Error(`Erro no upload do arquivo: ${error.message}`)
-      }
-
-      return this.buildUploadResponse(request.fileName, filePath)
-    } catch (err) {
-      throw new Error(`Falha ao enviar arquivo genérico: ${err}`)
-    }
-  }
-
-  async uploadTranscription(request: {
-    userEmail: string,
-    transcriptionBlob: Blob,
     questionIndex: number,
-    questionText?: string
-  }): Promise<StorageUploadResponse> {
+    questionText: string
+  ): Promise<StorageUploadResponse> {
     try {
-      const userFolderPath = this.getUserFolderPath(request.userEmail)
+      console.log('📝 Enviando transcrição REAL para Supabase Storage...')
+
+      // Verificar se o bucket existe
+      const bucketExists = await this.checkBucketExists()
+      if (!bucketExists) {
+        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
+      }
+
+      const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_TRANSCRIPTION_${timestamp}.txt`
+      const fileName = `Q${questionIndex.toString().padStart(3, '0')}_TRANSCRICAO_${timestamp}.txt`
       const filePath = `${userFolderPath}/transcriptions/${fileName}`
+      
+      const content = `DNA UP - Análise Narrativa Profunda
+Data: ${new Date().toLocaleString('pt-BR')}
+Usuário: ${userEmail}
+Pergunta ${questionIndex}: ${questionText}
 
-      const transcriptionFile = new File([request.transcriptionBlob], fileName, { type: 'text/plain' })
+TRANSCRIÇÃO:
+${transcription}
 
-      const { error } = await supabase.storage
+---
+Gerado automaticamente pelo DNA UP Platform
+`
+
+      const blob = new Blob([content], { type: 'text/plain; charset=utf-8' })
+
+      console.log('📤 Fazendo upload da transcrição para:', filePath)
+
+      const { data, error } = await supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, transcriptionFile, {
+        .upload(filePath, blob, {
           cacheControl: '3600',
-          upsert: true,
+          upsert: false,
           contentType: 'text/plain'
         })
 
@@ -161,26 +170,293 @@ export class SupabaseStorageService {
         throw new Error(`Erro no upload da transcrição: ${error.message}`)
       }
 
-      return this.buildUploadResponse(fileName, filePath)
-    } catch (err) {
-      throw new Error(`Falha ao enviar transcrição: ${err}`)
+      // Obter URL pública do arquivo
+      const { data: publicUrlData } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      console.log('✅ Transcrição enviada com sucesso para Supabase Storage!')
+      console.log('📁 Path:', data.path)
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao enviar transcrição:', error)
+      throw new Error(`Falha no upload da transcrição: ${error.message}`)
     }
   }
 
-  private buildUploadResponse(fileName: string, filePath: string): StorageUploadResponse {
-    const fileUrl = `${this.config.baseUrl}/storage/v1/object/public/${this.config.bucketName}/${filePath}`
-    return {
-      fileId: filePath,
-      fileName,
-      fileUrl,
-      publicUrl: fileUrl,
-      downloadUrl: fileUrl
+  // Upload do dataset de fine-tuning
+  async uploadFineTuningDataset(
+    dataset: any,
+    userEmail: string
+  ): Promise<StorageUploadResponse> {
+    try {
+      console.log('🤖 Enviando dataset de fine-tuning REAL para Supabase Storage...')
+
+      // Verificar se o bucket existe
+      const bucketExists = await this.checkBucketExists()
+      if (!bucketExists) {
+        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
+      }
+
+      const userFolderPath = this.getUserFolderPath(userEmail)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const fileName = `DNA_UP_FINE_TUNING_DATASET_${timestamp}.jsonl`
+      const filePath = `${userFolderPath}/datasets/${fileName}`
+      
+      // Converter dataset para formato JSONL (cada linha é um JSON)
+      const jsonlContent = dataset.map(item => JSON.stringify(item)).join('\n')
+
+      const blob = new Blob([jsonlContent], { type: 'application/jsonl' })
+
+      console.log('📤 Fazendo upload do dataset para:', filePath)
+      console.log('📊 Dataset contém:', dataset.length, 'exemplos')
+
+      const { data, error } = await supabase.storage
+        .from(this.config.bucketName)
+        .upload(filePath, blob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'application/jsonl'
+        })
+
+      if (error) {
+        console.error('❌ Erro no upload do dataset:', error)
+        throw new Error(`Erro no upload do dataset: ${error.message}`)
+      }
+
+      // Obter URL pública do arquivo
+      const { data: publicUrlData } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      console.log('✅ Dataset de fine-tuning enviado com sucesso!')
+      console.log('📁 Path:', data.path)
+      console.log('🔗 URL:', publicUrlData.publicUrl)
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao enviar dataset:', error)
+      throw new Error(`Falha no upload do dataset: ${error.message}`)
     }
   }
 
+  // Upload do relatório final
+  async uploadFinalReport(
+    userEmail: string,
+    analysisData: any,
+    responses: any[]
+  ): Promise<StorageUploadResponse> {
+    try {
+      console.log('📊 Gerando relatório final REAL completo...')
+
+      // Verificar se o bucket existe
+      const bucketExists = await this.checkBucketExists()
+      if (!bucketExists) {
+        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
+      }
+
+      const userFolderPath = this.getUserFolderPath(userEmail)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const fileName = `DNA_UP_RELATORIO_COMPLETO_${timestamp}.txt`
+      const filePath = `${userFolderPath}/reports/${fileName}`
+      
+      const content = `
+# DNA UP - RELATÓRIO DE ANÁLISE PSICOLÓGICA COMPLETA
+
+**Data:** ${new Date().toLocaleString('pt-BR')}
+**Usuário:** ${userEmail}
+**Total de Respostas:** ${responses.length}
+**Protocolo:** Clara R. - 108 Perguntas Estratégicas
+
+---
+
+## ANÁLISE PSICOLÓGICA
+
+${analysisData.analysis_document || 'Análise em processamento...'}
+
+---
+
+## RESUMO EXECUTIVO
+
+${analysisData.personality_summary || 'Resumo em processamento...'}
+
+---
+
+## INSIGHTS PRINCIPAIS
+
+${analysisData.key_insights?.map((insight, i) => `${i + 1}. ${insight}`).join('\n') || 'Insights em processamento...'}
+
+---
+
+## PADRÕES COMPORTAMENTAIS
+
+${analysisData.behavioral_patterns?.map((pattern, i) => `${i + 1}. ${pattern}`).join('\n') || 'Padrões em processamento...'}
+
+---
+
+## RECOMENDAÇÕES
+
+${analysisData.recommendations || 'Recomendações em processamento...'}
+
+---
+
+## ANÁLISE POR DOMÍNIO
+
+${Object.entries(analysisData.domain_analysis || {}).map(([domain, score]) => `**${domain}:** ${score}`).join('\n')}
+
+---
+
+## RESPOSTAS DETALHADAS
+
+${responses.map((response, i) => `
+### PERGUNTA ${response.question_index}
+**Domínio:** ${response.question_domain}
+**Pergunta:** ${response.question_text}
+**Resposta:** ${response.transcript_text || 'Transcrição não disponível'}
+**Duração:** ${Math.round(response.audio_duration || 0)}s
+**Data:** ${new Date(response.created_at).toLocaleString('pt-BR')}
+
+---
+`).join('\n')}
+
+---
+
+**Relatório gerado automaticamente pelo DNA UP Platform**
+**Deep Narrative Analysis - Protocolo Clara R.**
+**© 2024 DNA UP - Todos os direitos reservados**
+`
+
+      const blob = new Blob([content], { type: 'text/plain; charset=utf-8' })
+
+      console.log('📤 Fazendo upload do relatório final para:', filePath)
+
+      const { data, error } = await supabase.storage
+        .from(this.config.bucketName)
+        .upload(filePath, blob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'text/plain'
+        })
+
+      if (error) {
+        console.error('❌ Erro no upload do relatório:', error)
+        throw new Error(`Erro no upload do relatório: ${error.message}`)
+      }
+
+      // Obter URL pública do arquivo
+      const { data: publicUrlData } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      console.log('✅ Relatório final enviado com sucesso!')
+      console.log('📁 Path:', data.path)
+      console.log('🔗 URL:', publicUrlData.publicUrl)
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório final:', error)
+      throw new Error(`Falha ao gerar relatório: ${error.message}`)
+    }
+  }
+
+  // Verificar se está configurado
   isConfigured(): boolean {
-    return !!this.config.baseUrl && !!this.config.bucketName
+    return !!(
+      this.config.bucketName &&
+      this.config.baseUrl
+    )
+  }
+
+  // Info de configuração
+  getConfigInfo() {
+    return {
+      hasBucketName: !!this.config.bucketName,
+      hasBaseUrl: !!this.config.baseUrl,
+      isConfigured: this.isConfigured(),
+      bucketName: this.config.bucketName,
+      baseUrl: this.config.baseUrl?.substring(0, 30) + '...'
+    }
+  }
+
+  // Listar arquivos de um usuário
+  async listUserFiles(userEmail: string, folder?: string): Promise<any[]> {
+    try {
+      const userFolderPath = this.getUserFolderPath(userEmail)
+      const searchPath = folder ? `${userFolderPath}/${folder}` : userFolderPath
+
+      const { data, error } = await supabase.storage
+        .from(this.config.bucketName)
+        .list(searchPath)
+
+      if (error) {
+        console.error('❌ Erro ao listar arquivos:', error)
+        return []
+      }
+
+      console.log('✅ Arquivos listados:', data?.length || 0)
+      return data || []
+    } catch (error) {
+      console.error('❌ Erro ao listar arquivos:', error)
+      return []
+    }
+  }
+
+  // Deletar arquivo
+  async deleteFile(filePath: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.storage
+        .from(this.config.bucketName)
+        .remove([filePath])
+
+      if (error) {
+        console.error('❌ Erro ao deletar arquivo:', error)
+        return false
+      }
+
+      console.log('✅ Arquivo deletado com sucesso:', filePath)
+      return true
+    } catch (error) {
+      console.error('❌ Erro ao deletar arquivo:', error)
+      return false
+    }
+  }
+
+  // Obter URL de download de um arquivo
+  async getDownloadUrl(filePath: string): Promise<string | null> {
+    try {
+      const { data } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      return data.publicUrl
+    } catch (error) {
+      console.error('❌ Erro ao obter URL de download:', error)
+      return null
+    }
   }
 }
 
+// Instância singleton
 export const supabaseStorageService = new SupabaseStorageService()
