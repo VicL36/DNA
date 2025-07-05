@@ -1,4 +1,4 @@
-// Serviço de Supabase Storage - DNA UP Platform
+// Serviço REAL de Supabase Storage - DNA UP Platform
 import { supabase } from '@/lib/supabase'
 
 export interface SupabaseStorageConfig {
@@ -28,15 +28,26 @@ export class SupabaseStorageService {
     console.log('🔗 Base URL:', this.config.baseUrl?.substring(0, 30) + '...')
   }
 
+  /**
+   * @description Gera o caminho da pasta para um usuário específico.
+   * @param {string} userEmail - O email do usuário.
+   * @returns {string} O caminho da pasta do usuário.
+   */
   private getUserFolderPath(userEmail: string): string {
+    // Adiciona uma verificação para garantir que userEmail não seja nulo ou indefinido.
     if (!userEmail) {
-      console.error("Erro Crítico: userEmail não fornecido para gerar o caminho da pasta.");
+      console.error("Erro Crítico: userEmail não foi fornecido para gerar o caminho da pasta.");
       throw new Error("userEmail é nulo ou indefinido. Impossível continuar com a operação de armazenamento.");
     }
     const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
     return `users/${sanitizedEmail}`
   }
 
+  /**
+   * @description Faz o upload de um arquivo de áudio.
+   * @param {object} request - O objeto da requisição contendo o blob do áudio e metadados.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadAudioFile(request: {
     audioBlob: Blob,
     userEmail: string,
@@ -44,12 +55,18 @@ export class SupabaseStorageService {
     questionText: string
   }): Promise<StorageUploadResponse> {
     try {
+      console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
+      
       const userFolderPath = this.getUserFolderPath(request.userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
       const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
       const filePath = `${userFolderPath}/audio/${fileName}`
 
+      // Cria um objeto File a partir do Blob, fornecendo um nome de arquivo.
       const audioFile = new File([request.audioBlob], fileName, { type: 'audio/wav' });
+      
+      console.log('📄 Arquivo:', audioFile.name, 'Tamanho:', audioFile.size, 'bytes')
+      console.log('📤 Fazendo upload do áudio para:', filePath)
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
@@ -70,12 +87,18 @@ export class SupabaseStorageService {
     }
   }
 
+  /**
+   * @description Faz o upload de um relatório final (PDF ou TXT).
+   * @param {object} request - O objeto contendo o blob do relatório e metadados.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadFinalReport(request: {
     userEmail: string,
     reportBlob: Blob,
     reportType?: "pdf" | "txt"
   }): Promise<StorageUploadResponse> {
     try {
+      console.log('📄 Iniciando upload do relatório final para Supabase Storage...')
       const userFolderPath = this.getUserFolderPath(request.userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
       const type = request.reportType ?? "pdf"
@@ -103,6 +126,11 @@ export class SupabaseStorageService {
     }
   }
 
+  /**
+   * @description Faz o upload genérico de qualquer arquivo.
+   * @param {object} request - O objeto contendo o blob do arquivo, nome e caminho.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadGenericFile(request: {
     userEmail: string,
     fileBlob: Blob,
