@@ -147,7 +147,7 @@ export default function Analysis() {
       // Gerar relatório final + Dataset de Fine-tuning após cada resposta
       await generateFinalReportAndDataset(
         user.email,
-        { transcription: textResponse }, // Usar o texto como transcrição para análise
+        { transcription: textResponse, emotional_tone: 'text_response', keywords: extractKeywordsFromText(textResponse) }, // Usar o texto como transcrição para análise
         [{ // Criar um array com a resposta atual para o dataset
           question_index: currentQuestionIndex + 1,
           question_text: currentQuestion.text,
