@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js''
+import { supabase } from '../lib/supabase.js'.js'
 import type { Database } from '@/lib/supabase'
 
 type AnalysisSession = Database['public']['Tables']['analysis_sessions']['Row']
