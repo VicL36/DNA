@@ -19,7 +19,7 @@ export class SupabaseStorageService {
 
   constructor() {
     this.config = {
-      bucketName: 'dna-protocol-files', // Bucket principal para todos os arquivos
+      bucketName: import.meta.env.VITE_SUPABASE_BUCKET_NAME || 'dna-protocol-files',
       baseUrl: import.meta.env.VITE_SUPABASE_URL || ''
     }
 
@@ -28,67 +28,21 @@ export class SupabaseStorageService {
     console.log('🔗 Base URL:', this.config.baseUrl?.substring(0, 30) + '...')
   }
 
-  // Criar pasta para o usuário (estrutura de pastas no Storage)
+  /**
+   * @description Gera o caminho da pasta para um usuário específico.
+   * @param {string} userEmail - O email do usuário.
+   * @returns {string} O caminho da pasta do usuário.
+   */
   private getUserFolderPath(userEmail: string): string {
-    const sanitizedEmail = userEmail.replace('@', '_').replace(/\./g, '_')
+    const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
     return `users/${sanitizedEmail}`
   }
 
-  // Upload de arquivo genérico
-  async uploadFile(
-    file: File,
-    userEmail: string,
-    questionIndex: number,
-    questionText: string
-  ): Promise<StorageUploadResponse> {
-    try {
-      console.log('📤 Iniciando upload de arquivo genérico para Supabase Storage...')
-      console.log('📄 Arquivo:', file.name, 'Tamanho:', file.size, 'bytes')
-
-      const userFolderPath = this.getUserFolderPath(userEmail)
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const fileName = `Q${questionIndex.toString().padStart(3, '0')}_${file.name}_${timestamp}`
-      const filePath = `${userFolderPath}/files/${fileName}`
-
-      console.log('📤 Fazendo upload do arquivo para:', filePath)
-
-      const { data, error } = await supabase.storage
-        .from(this.config.bucketName)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type
-        })
-
-      if (error) {
-        console.error('❌ Erro no upload do arquivo:', error)
-        throw new Error(`Erro no upload do arquivo: ${error.message}`)
-      }
-
-      // Obter URL pública do arquivo
-      const { data: publicUrlData } = supabase.storage
-        .from(this.config.bucketName)
-        .getPublicUrl(filePath)
-
-      console.log('✅ Arquivo enviado com sucesso para Supabase Storage!')
-      console.log('📁 Path:', data.path)
-      console.log('🔗 URL:', publicUrlData.publicUrl)
-
-      return {
-        fileId: data.path,
-        fileName: fileName,
-        fileUrl: publicUrlData.publicUrl,
-        publicUrl: publicUrlData.publicUrl,
-        downloadUrl: publicUrlData.publicUrl
-      }
-
-    } catch (error) {
-      console.error('❌ Erro no upload do arquivo:', error)
-      throw new Error(`Falha no upload do arquivo: ${error.message}`)
-    }
-  }
-
-  // Upload de arquivo de áudio
+  /**
+   * @description Faz o upload de um arquivo de áudio.
+   * @param {object} request - O objeto da requisição contendo o arquivo e metadados.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadAudioFile(request: {
     file: File,
     userEmail: string,
@@ -119,7 +73,6 @@ export class SupabaseStorageService {
         throw new Error(`Erro no upload do áudio: ${error.message}`)
       }
 
-      // Obter URL pública do arquivo
       const { data: publicUrlData } = supabase.storage
         .from(this.config.bucketName)
         .getPublicUrl(filePath)
@@ -138,11 +91,18 @@ export class SupabaseStorageService {
 
     } catch (error) {
       console.error('❌ Erro no upload do áudio:', error)
-      throw new Error(`Falha no upload do áudio: ${error.message}`)
+      throw new Error(`Falha no upload do áudio: ${(error as Error).message}`)
     }
   }
 
-  // Upload de transcrição
+  /**
+   * @description Faz o upload de uma transcrição.
+   * @param {string} transcription - O texto da transcrição.
+   * @param {string} userEmail - O email do usuário.
+   * @param {number} questionIndex - O índice da pergunta.
+   * @param {string} questionText - O texto da pergunta.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadTranscription(
     transcription: string,
     userEmail: string,
@@ -157,17 +117,7 @@ export class SupabaseStorageService {
       const fileName = `Q${questionIndex.toString().padStart(3, '0')}_TRANSCRICAO_${timestamp}.txt`
       const filePath = `${userFolderPath}/transcriptions/${fileName}`
       
-      const content = `DNA UP - Análise Narrativa Profunda
-Data: ${new Date().toLocaleString('pt-BR')}
-Usuário: ${userEmail}
-Pergunta ${questionIndex}: ${questionText}
-
-TRANSCRIÇÃO:
-${transcription}
-
----
-Gerado automaticamente pelo DNA UP Platform
-`
+      const content = `DNA UP - Análise Narrativa Profunda\nData: ${new Date().toLocaleString('pt-BR')}\nUsuário: ${userEmail}\nPergunta ${questionIndex}: ${questionText}\n\nTRANSCRIÇÃO:\n${transcription}\n\n---\nGerado automaticamente pelo DNA UP Platform`
 
       const blob = new Blob([content], { type: 'text/plain; charset=utf-8' })
 
@@ -186,7 +136,6 @@ Gerado automaticamente pelo DNA UP Platform
         throw new Error(`Erro no upload da transcrição: ${error.message}`)
       }
 
-      // Obter URL pública do arquivo
       const { data: publicUrlData } = supabase.storage
         .from(this.config.bucketName)
         .getPublicUrl(filePath)
@@ -204,13 +153,18 @@ Gerado automaticamente pelo DNA UP Platform
 
     } catch (error) {
       console.error('❌ Erro ao enviar transcrição:', error)
-      throw new Error(`Falha no upload da transcrição: ${error.message}`)
+      throw new Error(`Falha no upload da transcrição: ${(error as Error).message}`)
     }
   }
 
-  // Upload do dataset de fine-tuning
+  /**
+   * @description Faz o upload do dataset de fine-tuning.
+   * @param {any[]} dataset - O array de dados do dataset.
+   * @param {string} userEmail - O email do usuário.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadFineTuningDataset(
-    dataset: any,
+    dataset: any[],
     userEmail: string
   ): Promise<StorageUploadResponse> {
     try {
@@ -221,9 +175,7 @@ Gerado automaticamente pelo DNA UP Platform
       const fileName = `DNA_UP_FINE_TUNING_DATASET_${timestamp}.jsonl`
       const filePath = `${userFolderPath}/datasets/${fileName}`
       
-      // Converter dataset para formato JSONL (cada linha é um JSON)
       const jsonlContent = dataset.map(item => JSON.stringify(item)).join('\n')
-
       const blob = new Blob([jsonlContent], { type: 'application/jsonl' })
 
       console.log('📤 Fazendo upload do dataset para:', filePath)
@@ -241,7 +193,6 @@ Gerado automaticamente pelo DNA UP Platform
         throw new Error(`Erro no upload do dataset: ${error.message}`)
       }
 
-      // Obter URL pública do arquivo
       const { data: publicUrlData } = supabase.storage
         .from(this.config.bucketName)
         .getPublicUrl(filePath)
@@ -259,20 +210,25 @@ Gerado automaticamente pelo DNA UP Platform
 
     } catch (error) {
       console.error('❌ Erro ao enviar dataset:', error)
-      throw new Error(`Falha no upload do dataset: ${error.message}`)
+      throw new Error(`Falha no upload do dataset: ${(error as Error).message}`)
     }
   }
 
-  // Upload do relatório final em PDF
+  /**
+   * @description Faz o upload do relatório final em PDF.
+   * @param {string} userEmail - O email do usuário.
+   * @param {any} analysisData - Os dados da análise.
+   * @param {any[]} responses - As respostas do usuário.
+   * @returns {Promise<StorageUploadResponse>} A resposta do upload.
+   */
   async uploadFinalReport(
     userEmail: string,
     analysisData: any,
     responses: any[]
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('📊 Gerando relatório final em PDF...')
+      console.log('📊 Gerando e fazendo upload do relatório final em PDF...')
 
-      // Importar o gerador de PDF dinamicamente
       const { PDFReportGenerator } = await import('./PDFReportGenerator')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
@@ -280,8 +236,7 @@ Gerado automaticamente pelo DNA UP Platform
       const fileName = `DNA_UP_RELATORIO_COMPLETO_${timestamp}.pdf`
       const filePath = `${userFolderPath}/reports/${fileName}`
       
-      // Gerar PDF
-      const pdfBlob = await PDFReportGenerator.generateReport({
+      const pdfBlob = await PDFReportGenerator.generate({
         userEmail,
         analysisData,
         responses,
@@ -303,7 +258,6 @@ Gerado automaticamente pelo DNA UP Platform
         throw new Error(`Erro no upload do relatório PDF: ${error.message}`)
       }
 
-      // Obter URL pública do arquivo
       const { data: publicUrlData } = supabase.storage
         .from(this.config.bucketName)
         .getPublicUrl(filePath)
@@ -320,20 +274,23 @@ Gerado automaticamente pelo DNA UP Platform
       }
 
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório PDF:', error)
-      throw new Error(`Falha ao gerar relatório PDF: ${error.message}`)
+      console.error('❌ Erro ao gerar/enviar relatório PDF:', error)
+      throw new Error(`Falha ao gerar/enviar relatório PDF: ${(error as Error).message}`)
     }
   }
 
-  // Verificar se está configurado
+  /**
+   * @description Verifica se o serviço está configurado.
+   * @returns {boolean} Verdadeiro se configurado.
+   */
   isConfigured(): boolean {
-    return !!(
-      this.config.bucketName &&
-      this.config.baseUrl
-    )
+    return !!(this.config.bucketName && this.config.baseUrl)
   }
 
-  // Info de configuração
+  /**
+   * @description Obtém informações de configuração para depuração.
+   * @returns {object} Objeto com o status da configuração.
+   */
   getConfigInfo() {
     return {
       hasBucketName: !!this.config.bucketName,
@@ -341,64 +298,6 @@ Gerado automaticamente pelo DNA UP Platform
       isConfigured: this.isConfigured()
     }
   }
-
-  // Listar arquivos de um usuário
-  async listUserFiles(userEmail: string, folder?: string): Promise<any[]> {
-    try {
-      const userFolderPath = this.getUserFolderPath(userEmail)
-      const searchPath = folder ? `${userFolderPath}/${folder}` : userFolderPath
-
-      const { data, error } = await supabase.storage
-        .from(this.config.bucketName)
-        .list(searchPath)
-
-      if (error) {
-        console.error('❌ Erro ao listar arquivos:', error)
-        return []
-      }
-
-      return data || []
-    } catch (error) {
-      console.error('❌ Erro ao listar arquivos:', error)
-      return []
-    }
-  }
-
-  // Deletar arquivo
-  async deleteFile(filePath: string): Promise<boolean> {
-    try {
-      const { error } = await supabase.storage
-        .from(this.config.bucketName)
-        .remove([filePath])
-
-      if (error) {
-        console.error('❌ Erro ao deletar arquivo:', error)
-        return false
-      }
-
-      console.log('✅ Arquivo deletado com sucesso:', filePath)
-      return true
-    } catch (error) {
-      console.error('❌ Erro ao deletar arquivo:', error)
-      return false
-    }
-  }
-
-  // Obter URL de download de um arquivo
-  async getDownloadUrl(filePath: string): Promise<string | null> {
-    try {
-      const { data } = supabase.storage
-        .from(this.config.bucketName)
-        .getPublicUrl(filePath)
-
-      return data.publicUrl
-    } catch (error) {
-      console.error('❌ Erro ao obter URL de download:', error)
-      return null
-    }
-  }
 }
 
-// Instância singleton
 export const supabaseStorageService = new SupabaseStorageService()
-
