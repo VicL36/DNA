@@ -40,29 +40,32 @@ export class SupabaseStorageService {
 
   /**
    * @description Faz o upload de um arquivo de áudio.
-   * @param {object} request - O objeto da requisição contendo o arquivo e metadados.
+   * @param {object} request - O objeto da requisição contendo o blob do áudio e metadados.
    * @returns {Promise<StorageUploadResponse>} A resposta do upload.
    */
   async uploadAudioFile(request: {
-    file: File,
+    audioBlob: Blob, // Alterado de 'file: File' para 'audioBlob: Blob'
     userEmail: string,
     questionIndex: number,
     questionText: string
   }): Promise<StorageUploadResponse> {
     try {
       console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
-      console.log('📄 Arquivo:', request.file.name, 'Tamanho:', request.file.size, 'bytes')
-
+      
       const userFolderPath = this.getUserFolderPath(request.userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
       const fileName = `Q${request.questionIndex.toString().padStart(3, '0')}_AUDIO_${timestamp}.wav`
       const filePath = `${userFolderPath}/audio/${fileName}`
 
+      // Cria um objeto File a partir do Blob, fornecendo um nome de arquivo.
+      const audioFile = new File([request.audioBlob], fileName, { type: 'audio/wav' });
+      
+      console.log('📄 Arquivo:', audioFile.name, 'Tamanho:', audioFile.size, 'bytes')
       console.log('📤 Fazendo upload do áudio para:', filePath)
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
-        .upload(filePath, request.file, {
+        .upload(filePath, audioFile, { // Usa o audioFile criado
           cacheControl: '3600',
           upsert: false,
           contentType: 'audio/wav'
