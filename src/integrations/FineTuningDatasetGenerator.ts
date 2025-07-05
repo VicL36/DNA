@@ -44,14 +44,9 @@ export class FineTuningDatasetGenerator {
         domain: "psicologia",
         user_email: userEmail,
         timestamp: new Date().toISOString(),
-        emotional_tone: llmResponse.emotional_tone,
-        keywords: llmResponse.keywords,
-      },
-    }
-
-    // Aqui você salvaria o exemplo no banco de dados ou arquivo
-    console.log('✅ Exemplo de fine-tuning gerado:', example)
-  }
+        emotional_tone: llmResponse?.emotional_tone || null,
+        keywords: llmResponse?.keywords || [],
+      }
 
   static generateResponseAnalysis(llmResponse: any): string {
     if (llmResponse && llmResponse.analysis_document) {
