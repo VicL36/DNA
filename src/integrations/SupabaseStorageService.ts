@@ -177,3 +177,4 @@ export class SupabaseStorageService {
     return !!this.config.baseUrl && !!this.config.bucketName;
   }
 }
+export const supabaseStorageService = new SupabaseStorageService();
