@@ -400,7 +400,7 @@ ${responses.map((response, i) => `
       return null
     }
   }
-}
+
 
 // Instância singleton
 export const supabaseStorageService = new SupabaseStorageService()
@@ -785,5 +785,5 @@ Esta análise psicológica avançada fornece uma base sólida para:
       ]
     }
   }
-}
+}}
 
