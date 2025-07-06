@@ -518,16 +518,193 @@ ${responses.map((response, i) => `
     responses: any[],
     advancedAnalysis?: any
   ): string {
-    // ... (O conteúdo da função continua aqui conforme o seu arquivo original)
-    // Por limitações de espaço, omiti a implementação, mas basta copiar do seu arquivo.
-    return ''; // Substitua pelo conteúdo real da função
+    const timestamp = new Date().toISOString()
+    const formattedDate = new Date().toLocaleString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+
+    return `# DNA UP - RELATÓRIO PSICOLÓGICO AVANÇADO
+
+## Informações Gerais
+- **Data de Geração:** ${formattedDate}
+- **Usuário:** ${userEmail}
+- **Total de Respostas:** ${responses.length}
+- **Protocolo:** Clara R. - 108 Perguntas Estratégicas
+- **Versão:** 2.0 (Análise Avançada)
+
+---
+
+## 🧠 ANÁLISE PSICOLÓGICA PROFUNDA
+
+### Perfil Psicológico Principal
+${analysisData.analysis_document || 'Análise em processamento...'}
+
+### Estrutura de Personalidade
+${analysisData.personality_summary || 'Resumo em processamento...'}
+
+---
+
+## 🔍 INSIGHTS ESTRATÉGICOS
+
+### Insights Principais
+${analysisData.key_insights?.map((insight, i) => `${i + 1}. **${insight}**`).join('\n') || 'Insights em processamento...'}
+
+### Padrões Comportamentais Identificados
+${analysisData.behavioral_patterns?.map((pattern, i) => `${i + 1}. **${pattern}**`).join('\n') || 'Padrões em processamento...'}
+
+---
+
+## 📊 ANÁLISE QUANTITATIVA POR DOMÍNIO
+
+${Object.entries(analysisData.domain_analysis || {}).map(([domain, score]) => 
+  `### ${domain}\n**Pontuação:** ${score}/100\n**Avaliação:** ${this.getDomainAssessment(score)}\n`
+).join('\n')}
+
+---
+
+## 🎯 RECOMENDAÇÕES PERSONALIZADAS
+
+### Desenvolvimento Pessoal
+${analysisData.recommendations || 'Recomendações em processamento...'}
+
+### Áreas de Crescimento
+${advancedAnalysis?.growth_areas?.map((area, i) => `${i + 1}. **${area}**`).join('\n') || 'Análise em processamento...'}
+
+### Estratégias de Melhoria
+${advancedAnalysis?.improvement_strategies?.map((strategy, i) => `${i + 1}. **${strategy}**`).join('\n') || 'Estratégias em processamento...'}
+
+---
+
+## 💡 ANÁLISE COMPORTAMENTAL AVANÇADA
+
+### Motivações Intrínsecas
+${advancedAnalysis?.intrinsic_motivations?.join('\n- ') || 'Motivações em análise...'}
+
+### Padrões de Comunicação
+${advancedAnalysis?.communication_patterns?.join('\n- ') || 'Padrões em análise...'}
+
+### Estilo de Tomada de Decisão
+${advancedAnalysis?.decision_making_style || 'Estilo em análise...'}
+
+---
+
+## 📝 RESPOSTAS DETALHADAS
+
+${responses.map((response, i) => `
+### PERGUNTA ${response.question_index}
+**Domínio:** ${response.question_domain}
+**Pergunta:** ${response.question_text}
+**Resposta:** ${response.transcript_text || 'Transcrição não disponível'}
+**Duração:** ${Math.round(response.audio_duration || 0)}s
+**Data:** ${new Date(response.created_at).toLocaleString('pt-BR')}
+**Análise:** ${response.analysis_notes || 'Análise pendente'}
+
+---
+`).join('\n')}
+
+---
+
+## 🔬 METODOLOGIA
+
+### Protocolo Aplicado
+- **Base Científica:** Análise Narrativa Profunda (DNA)
+- **Técnica:** Clara R. - 108 Perguntas Estratégicas
+- **Processamento:** IA Avançada + Análise Humana
+- **Validação:** Múltiplas camadas de verificação
+
+### Ferramentas Utilizadas
+- Transcrição automática de alta precisão
+- Análise semântica avançada
+- Processamento de linguagem natural
+- Algoritmos de detecção de padrões
+- Análise psicológica computacional
+
+---
+
+## ⚠️ CONSIDERAÇÕES IMPORTANTES
+
+### Limitações
+- Esta análise é baseada em respostas fornecidas em um momento específico
+- Resultados podem variar dependendo do contexto e estado emocional
+- Recomenda-se acompanhamento profissional para questões complexas
+
+### Recomendações de Uso
+- Utilize como ferramenta de autoconhecimento
+- Compartilhe com profissionais qualificados quando necessário
+- Revise periodicamente para acompanhar evolução pessoal
+
+---
+
+**Relatório gerado automaticamente pelo DNA UP Platform**
+**Deep Narrative Analysis - Protocolo Clara R.**
+**© 2024 DNA UP - Todos os direitos reservados**
+**Timestamp:** ${timestamp}
+`
+  }
+
+  // Avaliar domínio baseado na pontuação
+  private getDomainAssessment(score: any): string {
+    const numScore = typeof score === 'number' ? score : parseFloat(score) || 0
+    
+    if (numScore >= 80) return 'Excelente - Área de alta competência'
+    if (numScore >= 60) return 'Bom - Área desenvolvida com potencial'
+    if (numScore >= 40) return 'Moderado - Área que requer atenção'
+    if (numScore >= 20) return 'Baixo - Área que necessita desenvolvimento'
+    return 'Crítico - Área que requer intervenção imediata'
   }
 
   // Preparar dados específicos para AllTalk TTS
   private prepareAllTalkTTSData(voiceCloningData: any[], userEmail: string): any {
-    // ... (O conteúdo da função continua aqui conforme o seu arquivo original)
-    // Por limitações de espaço, omiti a implementação, mas basta copiar do seu arquivo.
-    return {}; // Substitua pelo conteúdo real da função
+    const timestamp = new Date().toISOString()
+    
+    return {
+      user_email: userEmail,
+      created_at: timestamp,
+      voice_profile: {
+        name: `DNA_UP_${userEmail.replace('@', '_').replace(/\./g, '_')}`,
+        description: 'Perfil de voz gerado pelo DNA UP Platform',
+        language: 'pt-BR',
+        gender: 'auto-detect',
+        age_range: 'auto-detect'
+      },
+      audio_samples: voiceCloningData.map((sample, index) => ({
+        id: `sample_${index + 1}`,
+        file_name: sample.fileName || `audio_${index + 1}.wav`,
+        file_url: sample.fileUrl || sample.publicUrl,
+        duration: sample.duration || 0,
+        transcription: sample.transcription || '',
+        question_index: sample.questionIndex || index + 1,
+        quality_score: sample.qualityScore || 0.8,
+        emotion_tag: sample.emotionTag || 'neutral',
+        energy_level: sample.energyLevel || 'medium'
+      })),
+      training_config: {
+        model_type: 'alltalk_tts',
+        training_steps: 1000,
+        learning_rate: 0.0001,
+        batch_size: 16,
+        voice_fidelity: 'high',
+        naturalness: 'high',
+        pronunciation_accuracy: 'high'
+      },
+      quality_metrics: {
+        total_samples: voiceCloningData.length,
+        total_duration: voiceCloningData.reduce((sum, sample) => sum + (sample.duration || 0), 0),
+        average_quality: voiceCloningData.reduce((sum, sample) => sum + (sample.qualityScore || 0.8), 0) / voiceCloningData.length,
+        recommended_training: voiceCloningData.length >= 20 ? 'full' : 'basic'
+      },
+      metadata: {
+        platform: 'DNA UP',
+        version: '2.0',
+        protocol: 'Clara R. - 108 Perguntas',
+        processing_date: timestamp,
+        generated_by: 'DNA UP Platform'
+      }
+    }
   }
 }
 
