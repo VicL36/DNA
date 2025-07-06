@@ -1,7 +1,8 @@
 // Integrações REAIS para DNA UP Platform - UPLOAD IMEDIATO
 import { supabaseStorageService } from './SupabaseStorageService'
 import { FineTuningDatasetGenerator } from './FineTuningDatasetGenerator'
-import { AdvancedAnalysisService } from './integrations/AdvancedAnalysisService'
+// Fix: Import path corrected
+import { AdvancedAnalysisService } from './AdvancedAnalysisService'
 
 export interface LLMRequest {
   prompt: string
@@ -37,6 +38,9 @@ export interface FileUploadResponse {
   transcription_file_id?: string
   transcription_url?: string
 }
+
+// Fix: Create instance of AdvancedAnalysisService
+const advancedAnalysisService = new AdvancedAnalysisService()
 
 // Transcrição real usando Deepgram
 export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
@@ -364,8 +368,9 @@ export async function generateFinalReportAndDataset(
       dataset = advancedAnalysis.fineTuningDataset
       console.log(`✅ Usando dataset avançado: ${dataset.length} exemplos`)
     } else {
-      // Fallback para dataset básico
-      dataset = FineTuningDatasetGenerator.generateDataset(
+      // Fix: Create instance and call static method properly
+      const datasetGenerator = new FineTuningDatasetGenerator()
+      dataset = datasetGenerator.generateDataset(
         userEmail,
         responses,
         analysisData
@@ -387,8 +392,9 @@ export async function generateFinalReportAndDataset(
       voiceCloningData = [advancedAnalysis.voiceCloningData]
       console.log('✅ Dados de voz da análise avançada preparados')
     } else {
-      // Fallback para dados básicos
-      voiceCloningData = FineTuningDatasetGenerator.generateVoiceCloningData(responses)
+      // Fix: Create instance and call static method properly
+      const datasetGenerator = new FineTuningDatasetGenerator()
+      voiceCloningData = datasetGenerator.generateVoiceCloningData(responses)
       console.log('🔄 Dados de voz básicos preparados')
     }
 
@@ -424,63 +430,6 @@ export async function generateFinalReportAndDataset(
       datasetFileUrl: 'https://supabase.storage.mock/dataset',
       voiceCloningData: []
     }
-  }
-}
-
-// Análise simulada para fallback
-function generateMockAnalysis(transcriptions: string[]): LLMResponse {
-  console.log('🔄 Usando análise simulada (fallback)')
-  
-  return {
-    analysis_document: `
-# Análise Psicológica Completa - DNA UP
-
-## Perfil Geral
-Com base nas ${transcriptions.length} respostas analisadas, identificamos um perfil de personalidade complexo e multifacetado, caracterizado por uma forte capacidade de introspecção e busca constante por autenticidade.
-
-## Características Principais
-- **Autoconhecimento Elevado**: Demonstra alta consciência sobre seus próprios padrões e motivações
-- **Comunicação Autêntica**: Expressa-se de forma genuína e vulnerável
-- **Orientação para Crescimento**: Busca constantemente evolução pessoal e profissional
-- **Sensibilidade Emocional**: Processa experiências de forma profunda e reflexiva
-- **Pensamento Sistêmico**: Conecta experiências em padrões maiores de significado
-- **Resiliência Adaptativa**: Transforma desafios em oportunidades de crescimento
-
-## Padrões Comportamentais
-1. Tendência a contextualizar experiências dentro de um framework maior de significado
-2. Processamento reflexivo antes de tomar decisões importantes
-3. Valorização de relacionamentos profundos e significativos
-4. Integração equilibrada entre aspectos emocionais e racionais
-5. Busca por coerência entre valores pessoais e ações
-6. Abertura para feedback e mudança quando alinhados com valores centrais
-
-## Recomendações
-Continue investindo em práticas de autoconhecimento, pois sua capacidade natural de introspecção é um grande diferencial. Desenvolva ainda mais suas habilidades de comunicação empática, que já demonstram ser um ponto forte.
-
-Busque equilíbrio entre introspecção e ação prática, transformando insights em mudanças concretas. Considere explorar modalidades que integrem corpo, mente e espírito, aproveitando sua tendência natural para abordagens holísticas.
-
-Mantenha-se aberto a novas perspectivas enquanto honra seus valores fundamentais, usando sua sensibilidade emocional como guia para decisões importantes.
-`,
-    personality_summary: 'Personalidade introspectiva com forte orientação para crescimento pessoal e autenticidade.',
-    key_insights: [
-      'Alta capacidade de autoconhecimento e reflexão',
-      'Comunicação autêntica e vulnerável',
-      'Busca constante por significado e propósito',
-      'Valorização de relacionamentos profundos',
-      'Orientação para crescimento contínuo',
-      'Sensibilidade a questões existenciais'
-    ],
-    behavioral_patterns: [
-      'Processamento reflexivo antes de respostas',
-      'Busca por compreensão profunda',
-      'Tendência a contextualizar experiências',
-      'Comunicação empática e genuína',
-      'Orientação para soluções construtivas',
-      'Integração de aspectos emocionais e racionais'
-    ],
-    recommendations: 'Continue investindo em práticas de autoconhecimento. Desenvolva ainda mais suas habilidades de comunicação empática. Busque equilíbrio entre introspecção e ação prática.',
-    confidence_score: 0.85,
-    domain_analysis: generateDomainAnalysis(transcriptions)
   }
 }
 
@@ -552,4 +501,3 @@ function generateDomainAnalysis(transcriptions: string[]): any {
     'Criatividade': 8.0
   }
 }
-
