@@ -676,7 +676,7 @@ Retorne APENAS um array JSON com 10 exemplos no formato:
       throw new Error('Gemini API key não configurada')
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${this.geminiApiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${this.geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
