@@ -839,17 +839,38 @@ Retorne APENAS um array JSON com 10 exemplos no formato:
     // Remove markdown code blocks
     let clean = response.replace(/```json\n?/g, '').replace(/```\n?/g, '')
     
-    // Procura por JSON válido
-    const jsonMatch = clean.match(/\{[\s\S]*\}/) || clean.match(/\[[\s\S]*\]/)
-    if (jsonMatch) {
-    clean = jsonMatch[0]
+    // Tenta encontrar o primeiro e último colchete ou chave para isolar o JSON
+    const firstBracket = clean.indexOf('[')
+    const firstBrace = clean.indexOf('{')
+    const lastBracket = clean.lastIndexOf(']')
+    const lastBrace = clean.lastIndexOf('}')
+
+    let startIndex = -1;
+    let endIndex = -1;
+
+    if (firstBracket !== -1 && lastBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+        // Parece ser um array JSON
+        startIndex = firstBracket;
+        endIndex = lastBracket + 1;
+    } else if (firstBrace !== -1 && lastBrace !== -1) {
+        // Parece ser um objeto JSON
+        startIndex = firstBrace;
+        endIndex = lastBrace + 1;
+    }
+
+    if (startIndex !== -1 && endIndex !== -1) {
+        clean = clean.substring(startIndex, endIndex);
+    } else {
+        // Se não encontrar JSON válido, retorna a string original (ou lança erro, dependendo da estratégia)
+        console.warn('Não foi possível extrair JSON válido da resposta:', response);
+        return response; // Ou throw new Error('No valid JSON found');
+    }
+  
+    // Remove quebras de linha desnecessárias e espaços extras
+    clean = clean.replace(/\n/g, '').replace(/\s+/g, ' ').trim();
+  
+    return clean;
   }
-  
-  // Remove quebras de linha desnecessárias
-  clean = clean.replace(/\n/g, ' ').trim()
-  
-  return clean
-}
 
 // Métodos de fallback com dados padrão
 private getDefaultPersonalityProfile(): PersonalityProfile {
@@ -868,7 +889,7 @@ private getDefaultPersonalityProfile(): PersonalityProfile {
     },
     thinkingPatterns: {
       structure: 'mixed',
-      approach: 'balanced',
+      approach: 'analytical',
       abstraction: 'balanced',
       detail: 'balanced',
       processingSpeed: 'deliberate'
@@ -993,3 +1014,5 @@ private getDefaultBehaviorModel(): any {
   }
 }
 }
+
+
