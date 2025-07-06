@@ -1,7 +1,7 @@
 // Integrações REAIS para DNA UP Platform - UPLOAD IMEDIATO
 import { supabaseStorageService } from './SupabaseStorageService'
 import { FineTuningDatasetGenerator } from './FineTuningDatasetGenerator'
-import { advancedAnalysisService } from './AdvancedAnalysisService'
+import { AdvancedAnalysisService } from './integrations/AdvancedAnalysisService'
 
 export interface LLMRequest {
   prompt: string
