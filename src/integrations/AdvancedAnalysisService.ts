@@ -110,6 +110,36 @@ export interface VoiceCloningData {
   }
 }
 
+export interface GrowthAreas {
+  identifiedAreas: string[];
+  potentialImpact: string[];
+  developmentSuggestions: string[];
+}
+
+export interface ImprovementStrategies {
+  recommendedStrategies: string[];
+  actionableSteps: string[];
+  expectedOutcomes: string[];
+}
+
+export interface IntrinsicMotivations {
+  coreDrivers: string[];
+  valuesAlignment: string[];
+  passionAreas: string[];
+}
+
+export interface CommunicationPatterns {
+  dominantStyles: string[];
+  interactionPreferences: string[];
+  conflictResolutionApproaches: string[];
+}
+
+export interface DecisionMakingStyle {
+  approach: 'rational' | 'intuitive' | 'balanced';
+  riskTolerance: 'high' | 'medium' | 'low';
+  influencingFactors: string[];
+}
+
 export interface AdvancedAnalysisResult {
   personalityProfile: PersonalityProfile
   beliefSystem: BeliefSystem
@@ -121,6 +151,11 @@ export interface AdvancedAnalysisResult {
     responseGuidelines: any
     dialogueExamples: any[]
   }
+  growthAreas: GrowthAreas;
+  improvementStrategies: ImprovementStrategies;
+  intrinsicMotivations: IntrinsicMotivations;
+  communicationPatterns: CommunicationPatterns;
+  decisionMakingStyle: DecisionMakingStyle;
   fineTuningDataset: any[]
   confidenceScore: number
   limitations: string[]
@@ -165,6 +200,11 @@ export class AdvancedAnalysisService {
       const linguisticPatterns = await this.analyzeLinguisticPatterns(transcriptions)
       const voiceCloningData = await this.prepareVoiceCloningData(request.responses, request.audioFiles)
       const behaviorModel = await this.createBehaviorModel(transcriptions, personalityProfile, beliefSystem)
+      const growthAreas = await this.analyzeGrowthAreas(transcriptions);
+      const improvementStrategies = await this.analyzeImprovementStrategies(transcriptions);
+      const intrinsicMotivations = await this.analyzeIntrinsicMotivations(transcriptions);
+      const communicationPatterns = await this.analyzeCommunicationPatterns(transcriptions);
+      const decisionMakingStyle = await this.analyzeDecisionMakingStyle(transcriptions);
       const fineTuningDataset = await this.generateFineTuningDataset(request.userEmail, request.responses, personalityProfile, behaviorModel)
 
       const result: AdvancedAnalysisResult = {
@@ -174,6 +214,11 @@ export class AdvancedAnalysisService {
         linguisticPatterns,
         voiceCloningData,
         behaviorModel,
+        growthAreas,
+        improvementStrategies,
+        intrinsicMotivations,
+        communicationPatterns,
+        decisionMakingStyle,
         fineTuningDataset,
         confidenceScore: 0.92,
         limitations: [
@@ -602,6 +647,200 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
     }
   }
 
+  private async analyzeGrowthAreas(transcriptions: string): Promise<GrowthAreas> {
+    const prompt = `
+# Análise de Áreas de Crescimento
+
+Analise as respostas e identifique áreas potenciais para crescimento e desenvolvimento pessoal:
+
+${transcriptions}
+
+## EXTRAIA:
+
+### 1. ÁREAS IDENTIFICADAS
+- Temas onde há espaço para aprendizado ou aprimoramento
+- Desafios percebidos ou mencionados
+- Habilidades que podem ser desenvolvidas
+
+### 2. IMPACTO POTENCIAL
+- Como o desenvolvimento nessas áreas pode beneficiar a pessoa
+- Oportunidades que podem surgir
+
+### 3. SUGESTÕES DE DESENVOLVIMENTO
+- Ações ou abordagens para fomentar o crescimento
+
+Retorne APENAS um JSON válido com a seguinte estrutura:
+{
+  "identifiedAreas": ["..."],
+  "potentialImpact": ["..."],
+  "developmentSuggestions": ["..."]
+}
+`
+    try {
+      const response = await this.callGeminiAPI(prompt);
+      return this.parseGrowthAreas(response);
+    } catch (error) {
+      console.error('❌ Erro na análise de áreas de crescimento:', error);
+      return this.getDefaultGrowthAreas();
+    }
+  }
+
+  private async analyzeImprovementStrategies(transcriptions: string): Promise<ImprovementStrategies> {
+    const prompt = `
+# Análise de Estratégias de Melhoria
+
+Com base nas respostas, sugira estratégias práticas para melhoria contínua:
+
+${transcriptions}
+
+## EXTRAIA:
+
+### 1. ESTRATÉGIAS RECOMENDADAS
+- Abordagens para superar desafios
+- Métodos para aprimorar habilidades
+- Formas de otimizar processos ou comportamentos
+
+### 2. PASSOS ACIONÁVEIS
+- Ações concretas que a pessoa pode tomar
+- Pequenas mudanças com grande impacto
+
+### 3. RESULTADOS ESPERADOS
+- Benefícios diretos da aplicação das estratégias
+- Impacto no desempenho ou bem-estar
+
+Retorne APENAS um JSON válido com a seguinte estrutura:
+{
+  "recommendedStrategies": ["..."],
+  "actionableSteps": ["..."],
+  "expectedOutcomes": ["..."]
+}
+`
+    try {
+      const response = await this.callGeminiAPI(prompt);
+      return this.parseImprovementStrategies(response);
+    } catch (error) {
+      console.error('❌ Erro na análise de estratégias de melhoria:', error);
+      return this.getDefaultImprovementStrategies();
+    }
+  }
+
+  private async analyzeIntrinsicMotivations(transcriptions: string): Promise<IntrinsicMotivations> {
+    const prompt = `
+# Análise de Motivações Intrínsecas
+
+Identifique as motivações internas e os impulsionadores que movem a pessoa:
+
+${transcriptions}
+
+## EXTRAIA:
+
+### 1. IMPULSIONADORES CENTRAIS
+- O que realmente motiva a pessoa a agir
+- Fontes de energia e persistência
+- Desejos e necessidades profundas
+
+### 2. ALINHAMENTO COM VALORES
+- Como as ações se conectam com os valores fundamentais
+- Onde a pessoa encontra significado
+
+### 3. ÁREAS DE PAIXÃO
+- Tópicos ou atividades que geram entusiasmo genuíno
+- Interesses que a pessoa persegue por si mesma
+
+Retorne APENAS um JSON válido com a seguinte estrutura:
+{
+  "coreDrivers": ["..."],
+  "valuesAlignment": ["..."],
+  "passionAreas": ["..."]
+}
+`
+    try {
+      const response = await this.callGeminiAPI(prompt);
+      return this.parseIntrinsicMotivations(response);
+    } catch (error) {
+      console.error('❌ Erro na análise de motivações intrínsecas:', error);
+      return this.getDefaultIntrinsicMotivations();
+    }
+  }
+
+  private async analyzeCommunicationPatterns(transcriptions: string): Promise<CommunicationPatterns> {
+    const prompt = `
+# Análise de Padrões de Comunicação
+
+Detalhe os padrões de comunicação observados nas respostas:
+
+${transcriptions}
+
+## EXTRAIA:
+
+### 1. ESTILOS DOMINANTES
+- Assertivo, passivo, agressivo, passivo-agressivo
+- Direto vs. indireto
+- Formal vs. informal
+
+### 2. PREFERÊNCIAS DE INTERAÇÃO
+- Como a pessoa prefere se comunicar (escrito, verbal, etc.)
+- Preferência por discussões em grupo ou individuais
+
+### 3. ABORDAGENS DE RESOLUÇÃO DE CONFLITOS
+- Como a pessoa lida com desacordos ou tensões
+- Estratégias para mediar ou evitar conflitos
+
+Retorne APENAS um JSON válido com a seguinte estrutura:
+{
+  "dominantStyles": ["..."],
+  "interactionPreferences": ["..."],
+  "conflictResolutionApproaches": ["..."]
+}
+`
+    try {
+      const response = await this.callGeminiAPI(prompt);
+      return this.parseCommunicationPatterns(response);
+    } catch (error) {
+      console.error('❌ Erro na análise de padrões de comunicação:', error);
+      return this.getDefaultCommunicationPatterns();
+    }
+  }
+
+  private async analyzeDecisionMakingStyle(transcriptions: string): Promise<DecisionMakingStyle> {
+    const prompt = `
+# Análise de Estilo de Tomada de Decisão
+
+Analise como a pessoa aborda a tomada de decisões:
+
+${transcriptions}
+
+## EXTRAIA:
+
+### 1. ABORDAGEM
+- Racional (baseado em lógica e dados)
+- Intuitivo (baseado em 'feeling' ou experiência)
+- Equilibrado (combinação de ambos)
+
+### 2. TOLERÂNCIA A RISCO
+- Alta, média ou baixa
+- Como a pessoa lida com incertezas
+
+### 3. FATORES INFLUENCIADORES
+- O que mais pesa nas decisões (valores, opiniões alheias, prazos, etc.)
+- Processo de coleta de informações
+
+Retorne APENAS um JSON válido com a seguinte estrutura:
+{
+  "approach": "rational|intuitive|balanced",
+  "riskTolerance": "high|medium|low",
+  "influencingFactors": ["..."]
+}
+`
+    try {
+      const response = await this.callGeminiAPI(prompt);
+      return this.parseDecisionMakingStyle(response);
+    } catch (error) {
+      console.error('❌ Erro na análise de estilo de tomada de decisão:', error);
+      return this.getDefaultDecisionMakingStyle();
+    }
+  }
+
   private async generateFineTuningDataset(userEmail: string, responses: any[], personality: PersonalityProfile, behaviorModel: any): Promise<any[]> {
     console.log('🤖 Gerando dataset de fine-tuning para TinyLlama...')
     
@@ -819,6 +1058,76 @@ Retorne APENAS um array JSON com 10 exemplos no formato:
     }
   }
 
+  private parseGrowthAreas(response: string): GrowthAreas {
+    try {
+      const cleanResponse = this.cleanJsonResponse(response);
+      const parsed = JSON.parse(cleanResponse);
+      if (!parsed.identifiedAreas || !parsed.potentialImpact || !parsed.developmentSuggestions) {
+        throw new Error('Estrutura inválida');
+      }
+      return parsed;
+    } catch (error) {
+      console.warn('Erro ao parsear áreas de crescimento, usando padrão:', error);
+      return this.getDefaultGrowthAreas();
+    }
+  }
+
+  private parseImprovementStrategies(response: string): ImprovementStrategies {
+    try {
+      const cleanResponse = this.cleanJsonResponse(response);
+      const parsed = JSON.parse(cleanResponse);
+      if (!parsed.recommendedStrategies || !parsed.actionableSteps || !parsed.expectedOutcomes) {
+        throw new Error('Estrutura inválida');
+      }
+      return parsed;
+    } catch (error) {
+      console.warn('Erro ao parsear estratégias de melhoria, usando padrão:', error);
+      return this.getDefaultImprovementStrategies();
+    }
+  }
+
+  private parseIntrinsicMotivations(response: string): IntrinsicMotivations {
+    try {
+      const cleanResponse = this.cleanJsonResponse(response);
+      const parsed = JSON.parse(cleanResponse);
+      if (!parsed.coreDrivers || !parsed.valuesAlignment || !parsed.passionAreas) {
+        throw new Error('Estrutura inválida');
+      }
+      return parsed;
+    } catch (error) {
+      console.warn('Erro ao parsear motivações intrínsecas, usando padrão:', error);
+      return this.getDefaultIntrinsicMotivations();
+    }
+  }
+
+  private parseCommunicationPatterns(response: string): CommunicationPatterns {
+    try {
+      const cleanResponse = this.cleanJsonResponse(response);
+      const parsed = JSON.parse(cleanResponse);
+      if (!parsed.dominantStyles || !parsed.interactionPreferences || !parsed.conflictResolutionApproaches) {
+        throw new Error('Estrutura inválida');
+      }
+      return parsed;
+    } catch (error) {
+      console.warn('Erro ao parsear padrões de comunicação, usando padrão:', error);
+      return this.getDefaultCommunicationPatterns();
+    }
+  }
+
+  private parseDecisionMakingStyle(response: string): DecisionMakingStyle {
+    try {
+      const cleanResponse = this.cleanJsonResponse(response);
+      const parsed = JSON.parse(cleanResponse);
+      if (!parsed.approach || !parsed.riskTolerance || !parsed.influencingFactors) {
+        throw new Error('Estrutura inválida');
+      }
+      return parsed;
+    } catch (error) {
+      console.warn('Erro ao parsear estilo de tomada de decisão, usando padrão:', error);
+      return this.getDefaultDecisionMakingStyle();
+    }
+  }
+
   private parseSyntheticExamples(response: string): any[] {
     try {
       const cleanResponse = this.cleanJsonResponse(response)
@@ -1012,6 +1321,46 @@ private getDefaultBehaviorModel(): any {
       }
     ]
   }
+}
+
+private getDefaultGrowthAreas(): GrowthAreas {
+  return {
+    identifiedAreas: ['autoconhecimento', 'inteligência emocional'],
+    potentialImpact: ['melhora na tomada de decisões', 'relacionamentos mais saudáveis'],
+    developmentSuggestions: ['leitura', 'meditação', 'terapia']
+  };
+}
+
+private getDefaultImprovementStrategies(): ImprovementStrategies {
+  return {
+    recommendedStrategies: ['feedback ativo', 'prática deliberada'],
+    actionableSteps: ['pedir feedback regularmente', 'definir metas de melhoria'],
+    expectedOutcomes: ['aumento de performance', 'maior autoconfiança']
+  };
+}
+
+private getDefaultIntrinsicMotivations(): IntrinsicMotivations {
+  return {
+    coreDrivers: ['autonomia', 'maestria', 'propósito'],
+    valuesAlignment: ['contribuição social', 'aprendizado contínuo'],
+    passionAreas: ['inovação', 'resolução de problemas complexos']
+  };
+}
+
+private getDefaultCommunicationPatterns(): CommunicationPatterns {
+  return {
+    dominantStyles: ['assertivo', 'colaborativo'],
+    interactionPreferences: ['discussões abertas', 'troca de ideias'],
+    conflictResolutionApproaches: ['mediação', 'busca por soluções ganha-ganha']
+  };
+}
+
+private getDefaultDecisionMakingStyle(): DecisionMakingStyle {
+  return {
+    approach: 'balanced',
+    riskTolerance: 'medium',
+    influencingFactors: ['dados', 'intuição', 'conselho de especialistas']
+  };
 }
 }
 
