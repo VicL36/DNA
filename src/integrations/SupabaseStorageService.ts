@@ -1,5 +1,5 @@
-// Serviço REAL de Supabase Storage - DNA UP Platform - CORRIGIDO FINAL
-import { supabase } from '../lib/supabase'
+// Serviço REAL de Supabase Storage - DNA UP Platform
+import { supabase } from '@/lib/supabase'
 
 export interface SupabaseStorageConfig {
   bucketName: string
@@ -19,39 +19,13 @@ export class SupabaseStorageService {
 
   constructor() {
     this.config = {
-      bucketName: 'dna-protocol-files', // Bucket fixo criado via SQL
-      baseUrl: process.env.VITE_SUPABASE_URL || ''
+      bucketName: 'dna-protocol-files', // Bucket principal para todos os arquivos
+      baseUrl: import.meta.env.VITE_SUPABASE_URL || ''
     }
 
     console.log('🔧 Configurando Supabase Storage Service...')
     console.log('🪣 Bucket Name:', this.config.bucketName)
     console.log('🔗 Base URL:', this.config.baseUrl?.substring(0, 30) + '...')
-  }
-
-  // Verificar se o bucket existe (não criar, apenas verificar)
-  private async checkBucketExists(): Promise<boolean> {
-    try {
-      const { data: buckets, error } = await supabase.storage.listBuckets()
-      
-      if (error) {
-        console.error('❌ Erro ao verificar buckets:', error)
-        return false
-      }
-
-      const bucketExists = buckets?.some(bucket => bucket.name === this.config.bucketName)
-      
-      if (bucketExists) {
-        console.log('✅ Bucket existe:', this.config.bucketName)
-        return true
-      } else {
-        console.error('❌ Bucket não existe:', this.config.bucketName)
-        console.error('🔧 Execute a migração SQL: supabase/migrations/20250630020001_fix_storage_setup.sql')
-        return false
-      }
-    } catch (error) {
-      console.error('❌ Erro ao verificar bucket:', error)
-      return false
-    }
   }
 
   // Criar pasta para o usuário (estrutura de pastas no Storage)
@@ -68,14 +42,8 @@ export class SupabaseStorageService {
     questionText: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('🎵 Iniciando upload REAL de áudio para Supabase Storage...')
+      console.log('🎵 Iniciando upload de áudio para Supabase Storage...')
       console.log('📄 Arquivo:', file.name, 'Tamanho:', file.size, 'bytes')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -89,7 +57,7 @@ export class SupabaseStorageService {
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: file.type || 'audio/wav'
+          contentType: 'audio/wav'
         })
 
       if (error) {
@@ -128,13 +96,7 @@ export class SupabaseStorageService {
     questionText: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('📝 Enviando transcrição REAL para Supabase Storage...')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
+      console.log('📝 Enviando transcrição para Supabase Storage...')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -198,13 +160,7 @@ Gerado automaticamente pelo DNA UP Platform
     userEmail: string
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('🤖 Enviando dataset de fine-tuning REAL para Supabase Storage...')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
+      console.log('🤖 Enviando dataset de fine-tuning para Supabase Storage...')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -217,7 +173,6 @@ Gerado automaticamente pelo DNA UP Platform
       const blob = new Blob([jsonlContent], { type: 'application/jsonl' })
 
       console.log('📤 Fazendo upload do dataset para:', filePath)
-      console.log('📊 Dataset contém:', dataset.length, 'exemplos')
 
       const { data, error } = await supabase.storage
         .from(this.config.bucketName)
@@ -239,7 +194,6 @@ Gerado automaticamente pelo DNA UP Platform
 
       console.log('✅ Dataset de fine-tuning enviado com sucesso!')
       console.log('📁 Path:', data.path)
-      console.log('🔗 URL:', publicUrlData.publicUrl)
 
       return {
         fileId: data.path,
@@ -262,13 +216,7 @@ Gerado automaticamente pelo DNA UP Platform
     responses: any[]
   ): Promise<StorageUploadResponse> {
     try {
-      console.log('📊 Gerando relatório final REAL completo...')
-
-      // Verificar se o bucket existe
-      const bucketExists = await this.checkBucketExists()
-      if (!bucketExists) {
-        throw new Error('Bucket não configurado. Execute a migração SQL primeiro.')
-      }
+      console.log('📊 Gerando relatório final completo...')
 
       const userFolderPath = this.getUserFolderPath(userEmail)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -365,7 +313,6 @@ ${responses.map((response, i) => `
 
       console.log('✅ Relatório final enviado com sucesso!')
       console.log('📁 Path:', data.path)
-      console.log('🔗 URL:', publicUrlData.publicUrl)
 
       return {
         fileId: data.path,
@@ -394,9 +341,7 @@ ${responses.map((response, i) => `
     return {
       hasBucketName: !!this.config.bucketName,
       hasBaseUrl: !!this.config.baseUrl,
-      isConfigured: this.isConfigured(),
-      bucketName: this.config.bucketName,
-      baseUrl: this.config.baseUrl?.substring(0, 30) + '...'
+      isConfigured: this.isConfigured()
     }
   }
 
@@ -415,7 +360,6 @@ ${responses.map((response, i) => `
         return []
       }
 
-      console.log('✅ Arquivos listados:', data?.length || 0)
       return data || []
     } catch (error) {
       console.error('❌ Erro ao listar arquivos:', error)
@@ -460,3 +404,386 @@ ${responses.map((response, i) => `
 
 // Instância singleton
 export const supabaseStorageService = new SupabaseStorageService()
+
+
+
+  // Upload de relatório avançado (incluindo análise psicológica completa)
+  async uploadAdvancedReport(
+    userEmail: string,
+    analysisData: any,
+    responses: any[],
+    advancedAnalysis?: any
+  ): Promise<StorageUploadResponse> {
+    try {
+      console.log('📊 Gerando relatório avançado para Supabase Storage...')
+
+      const userFolderPath = this.getUserFolderPath(userEmail)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const fileName = `DNA_UP_RELATORIO_AVANCADO_${timestamp}.md`
+      const filePath = `${userFolderPath}/reports/${fileName}`
+
+      // Gerar conteúdo do relatório avançado
+      const reportContent = this.generateAdvancedReportContent(
+        userEmail,
+        analysisData,
+        responses,
+        advancedAnalysis
+      )
+
+      const reportBlob = new Blob([reportContent], { type: 'text/markdown' })
+
+      const { data, error } = await supabase.storage
+        .from(this.config.bucketName)
+        .upload(filePath, reportBlob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'text/markdown'
+        })
+
+      if (error) {
+        console.error('❌ Erro no upload do relatório avançado:', error)
+        throw new Error(`Erro no upload do relatório: ${error.message}`)
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      console.log('✅ Relatório avançado salvo no Supabase Storage!')
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
+      }
+
+    } catch (error) {
+      console.error('❌ Erro no upload do relatório avançado:', error)
+      throw new Error(`Falha no upload do relatório: ${error.message}`)
+    }
+  }
+
+  // Upload de dados para clonagem de voz (AllTalk TTS)
+  async uploadVoiceCloningData(
+    voiceCloningData: any[],
+    userEmail: string
+  ): Promise<StorageUploadResponse> {
+    try {
+      console.log('🎤 Salvando dados de clonagem de voz para AllTalk TTS...')
+
+      const userFolderPath = this.getUserFolderPath(userEmail)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const fileName = `DNA_UP_VOICE_CLONING_DATA_${timestamp}.json`
+      const filePath = `${userFolderPath}/voice_cloning/${fileName}`
+
+      // Preparar dados específicos para AllTalk TTS
+      const allTalkData = this.prepareAllTalkTTSData(voiceCloningData, userEmail)
+
+      const dataBlob = new Blob([JSON.stringify(allTalkData, null, 2)], { 
+        type: 'application/json' 
+      })
+
+      const { data, error } = await supabase.storage
+        .from(this.config.bucketName)
+        .upload(filePath, dataBlob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'application/json'
+        })
+
+      if (error) {
+        console.error('❌ Erro no upload dos dados de voz:', error)
+        throw new Error(`Erro no upload dos dados de voz: ${error.message}`)
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(this.config.bucketName)
+        .getPublicUrl(filePath)
+
+      console.log('✅ Dados de clonagem de voz salvos no Supabase Storage!')
+
+      return {
+        fileId: data.path,
+        fileName: fileName,
+        fileUrl: publicUrlData.publicUrl,
+        publicUrl: publicUrlData.publicUrl,
+        downloadUrl: publicUrlData.publicUrl
+      }
+
+    } catch (error) {
+      console.error('❌ Erro no upload dos dados de voz:', error)
+      throw new Error(`Falha no upload dos dados de voz: ${error.message}`)
+    }
+  }
+
+  // Gerar conteúdo do relatório avançado
+  private generateAdvancedReportContent(
+    userEmail: string,
+    analysisData: any,
+    responses: any[],
+    advancedAnalysis?: any
+  ): string {
+    const timestamp = new Date().toLocaleString('pt-BR')
+    const userName = userEmail.split('@')[0]
+
+    return `# Relatório de Análise Psicológica Avançada - DNA UP Platform
+
+## Informações Gerais
+- **Usuário**: ${userName}
+- **Email**: ${userEmail}
+- **Data da Análise**: ${timestamp}
+- **Total de Respostas**: ${responses.length}
+- **Protocolo**: Clara R. (108 perguntas)
+
+---
+
+## Resumo Executivo
+
+${advancedAnalysis?.behaviorModel?.condensedProfile || 'Análise psicológica baseada nas respostas fornecidas durante o protocolo Clara R.'}
+
+---
+
+## Perfil de Personalidade
+
+### Estilo de Comunicação
+${advancedAnalysis?.personalityProfile ? `
+- **Formalidade**: ${advancedAnalysis.personalityProfile.communicationStyle.formality}
+- **Direcionamento**: ${advancedAnalysis.personalityProfile.communicationStyle.directness}
+- **Nível Técnico**: ${advancedAnalysis.personalityProfile.communicationStyle.technicalLevel}
+- **Uso de Humor**: ${advancedAnalysis.personalityProfile.communicationStyle.humorUsage.frequency}
+- **Expressões Características**: ${advancedAnalysis.personalityProfile.communicationStyle.characteristicExpressions.join(', ')}
+` : 'Análise de estilo de comunicação não disponível.'}
+
+### Padrões de Pensamento
+${advancedAnalysis?.personalityProfile ? `
+- **Estrutura**: ${advancedAnalysis.personalityProfile.thinkingPatterns.structure}
+- **Abordagem**: ${advancedAnalysis.personalityProfile.thinkingPatterns.approach}
+- **Abstração**: ${advancedAnalysis.personalityProfile.thinkingPatterns.abstraction}
+- **Detalhamento**: ${advancedAnalysis.personalityProfile.thinkingPatterns.detail}
+- **Velocidade**: ${advancedAnalysis.personalityProfile.thinkingPatterns.processingSpeed}
+` : 'Análise de padrões de pensamento não disponível.'}
+
+---
+
+## Sistema de Crenças e Valores
+
+${advancedAnalysis?.beliefSystem ? `
+### Valores Fundamentais
+${advancedAnalysis.beliefSystem.fundamentalValues.map(v => `- ${v}`).join('\n')}
+
+### Princípios Éticos
+${advancedAnalysis.beliefSystem.ethicalPrinciples.map(p => `- ${p}`).join('\n')}
+
+### Visão de Mundo
+- **Natureza Humana**: ${advancedAnalysis.beliefSystem.worldViews.humanNature}
+- **Organizações**: ${advancedAnalysis.beliefSystem.worldViews.organizations}
+- **Mudança e Progresso**: ${advancedAnalysis.beliefSystem.worldViews.changeAndProgress}
+` : 'Análise de sistema de crenças não disponível.'}
+
+---
+
+## Domínio de Conhecimento
+
+${advancedAnalysis?.knowledgeDomain ? `
+### Áreas de Expertise
+${advancedAnalysis.knowledgeDomain.expertiseAreas.map(a => `- ${a}`).join('\n')}
+
+### Interesses Intelectuais
+${advancedAnalysis.knowledgeDomain.intellectualInterests.map(i => `- ${i}`).join('\n')}
+` : 'Análise de domínio de conhecimento não disponível.'}
+
+---
+
+## Padrões Linguísticos
+
+${advancedAnalysis?.linguisticPatterns ? `
+### Vocabulário Característico
+${advancedAnalysis.linguisticPatterns.characteristicVocabulary.map(v => `- ${v}`).join('\n')}
+
+### Estrutura de Texto
+- **Comprimento de Frases**: ${advancedAnalysis.linguisticPatterns.textStructure.sentenceLength}
+- **Estilo de Parágrafo**: ${advancedAnalysis.linguisticPatterns.textStructure.paragraphStyle}
+` : 'Análise de padrões linguísticos não disponível.'}
+
+---
+
+## Preparação para Clonagem de Voz
+
+${advancedAnalysis?.voiceCloningData ? `
+### Arquivos de Áudio Selecionados
+Total de arquivos: ${advancedAnalysis.voiceCloningData.bestAudioFiles.length}
+
+### Características Vocais
+- **Tom**: ${advancedAnalysis.voiceCloningData.vocalCharacteristics.pitch}
+- **Ritmo**: ${advancedAnalysis.voiceCloningData.vocalCharacteristics.pace}
+- **Entonação**: ${advancedAnalysis.voiceCloningData.vocalCharacteristics.intonation.join(', ')}
+
+### Trejeitos Linguísticos
+- **Sotaque**: ${advancedAnalysis.voiceCloningData.linguisticTreats.accent}
+- **Preenchimentos**: ${advancedAnalysis.voiceCloningData.speechPatterns.fillers.join(', ')}
+- **Frases Características**: ${advancedAnalysis.voiceCloningData.speechPatterns.characteristicPhrases.join(', ')}
+` : 'Dados de clonagem de voz não disponíveis.'}
+
+---
+
+## Dataset de Fine-tuning
+
+${advancedAnalysis?.fineTuningDataset ? `
+- **Total de Exemplos**: ${advancedAnalysis.fineTuningDataset.length}
+- **Formato**: JSONL para TinyLlama
+- **Incluí**: Instruções, entradas e saídas baseadas no perfil psicológico
+` : 'Dataset de fine-tuning não disponível.'}
+
+---
+
+## Modelo Comportamental
+
+${advancedAnalysis?.behaviorModel ? `
+### Diretrizes de Resposta
+- **Tópicos de Engajamento**: ${advancedAnalysis.behaviorModel.responseGuidelines.engagementTopics?.join(', ') || 'Não especificado'}
+- **Tópicos de Cautela**: ${advancedAnalysis.behaviorModel.responseGuidelines.cautionTopics?.join(', ') || 'Não especificado'}
+- **Estilo de Comunicação**: ${advancedAnalysis.behaviorModel.responseGuidelines.communicationStyle?.join(', ') || 'Não especificado'}
+` : 'Modelo comportamental não disponível.'}
+
+---
+
+## Confiabilidade da Análise
+
+${advancedAnalysis ? `
+- **Score de Confiança**: ${(advancedAnalysis.confidenceScore * 100).toFixed(1)}%
+- **Limitações**: ${advancedAnalysis.limitations.join(', ')}
+` : 'Métricas de confiabilidade não disponíveis.'}
+
+---
+
+## Análise Básica (Fallback)
+
+${analysisData?.analysis_document || 'Análise básica não disponível.'}
+
+---
+
+## Respostas Analisadas
+
+${responses.map((r, i) => `
+### Pergunta ${r.question_index}: ${r.question_domain}
+**Pergunta**: ${r.question_text}
+**Resposta**: ${r.transcript_text}
+**Duração**: ${r.audio_duration ? `${r.audio_duration}s` : 'Texto'}
+**Tom Emocional**: ${r.emotional_tone || 'Não especificado'}
+
+---
+`).join('')}
+
+## Conclusão
+
+Esta análise psicológica avançada fornece uma base sólida para:
+1. **Fine-tuning de IA**: Dataset personalizado para TinyLlama
+2. **Clonagem de Voz**: Dados preparados para AllTalk TTS
+3. **Compreensão Profunda**: Perfil psicológico detalhado
+4. **Aplicações Futuras**: Base para desenvolvimento de IA personalizada
+
+---
+
+*Relatório gerado automaticamente pelo DNA UP Platform*
+*Tecnologias: Gemini AI, Deepgram, Supabase, AllTalk TTS*
+`
+  }
+
+  // Preparar dados específicos para AllTalk TTS
+  private prepareAllTalkTTSData(voiceCloningData: any[], userEmail: string): any {
+    const userName = userEmail.split('@')[0]
+    
+    return {
+      // Metadados para AllTalk TTS
+      metadata: {
+        speaker_name: userName,
+        language: 'pt-BR',
+        gender: 'unknown', // Será determinado pela análise de voz
+        age_range: 'adult',
+        created_at: new Date().toISOString(),
+        source: 'DNA UP Platform',
+        protocol: 'Clara R.'
+      },
+
+      // Configuração para AllTalk TTS
+      alltalk_config: {
+        model_type: 'voice_cloning',
+        training_data_format: 'wav',
+        sample_rate: 44100,
+        bit_depth: 16,
+        channels: 1,
+        min_audio_length: 10, // segundos
+        max_audio_length: 300, // segundos
+        voice_similarity_threshold: 0.85
+      },
+
+      // Dados de clonagem de voz
+      voice_cloning_data: voiceCloningData.length > 0 ? voiceCloningData[0] : {
+        bestAudioFiles: [],
+        vocalCharacteristics: {
+          pitch: 'médio',
+          pace: 'moderado',
+          rhythm: 'natural',
+          intonation: ['expressiva']
+        },
+        emotionalMarkers: {
+          excitement: ['tom mais alto'],
+          contemplation: ['pausas reflexivas'],
+          emphasis: ['repetição'],
+          hesitation: ['pausas']
+        },
+        speechPatterns: {
+          fillers: ['né', 'então'],
+          pauses: ['reflexivas'],
+          repetitions: ['para ênfase'],
+          characteristicPhrases: ['eu acho que']
+        },
+        linguisticTreats: {
+          pronunciation: ['clara'],
+          accent: 'brasileiro neutro',
+          vocabulary: ['acessível'],
+          grammar: ['correta']
+        }
+      },
+
+      // Instruções para AllTalk TTS
+      training_instructions: {
+        voice_description: `Voz de ${userName} extraída do protocolo Clara R.`,
+        training_steps: [
+          '1. Carregar arquivos de áudio selecionados',
+          '2. Aplicar pré-processamento (normalização, redução de ruído)',
+          '3. Extrair características vocais (pitch, timbre, ritmo)',
+          '4. Treinar modelo de clonagem de voz',
+          '5. Validar qualidade da síntese',
+          '6. Ajustar parâmetros conforme trejeitos identificados'
+        ],
+        quality_targets: {
+          similarity_score: 0.90,
+          naturalness_score: 0.85,
+          intelligibility_score: 0.95
+        }
+      },
+
+      // Scripts de exemplo para teste
+      test_scripts: [
+        'Olá, este é um teste da minha voz clonada.',
+        'Como você está hoje? Espero que esteja bem.',
+        'Esta tecnologia é realmente impressionante.',
+        'Obrigado por participar do protocolo Clara R.',
+        'Até logo e tenha um ótimo dia!'
+      ],
+
+      // Notas técnicas
+      technical_notes: [
+        'Dados extraídos de análise psicológica completa',
+        'Trejeitos de fala identificados automaticamente',
+        'Características linguísticas mapeadas pelo Gemini AI',
+        'Compatível com AllTalk TTS v1.0+',
+        'Requer pós-processamento para otimização'
+      ]
+    }
+  }
+}
+
