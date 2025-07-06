@@ -75,11 +75,6 @@ export interface LinguisticPatterns {
     paragraphStyle: string
     argumentationPatterns: string[]
   }
-  stylisticMarkers: {
-    humor: string[]
-    formality: string[]
-    audienceAdaptation: string[]
-  }
 }
 
 export interface VoiceCloningData {
@@ -180,6 +175,32 @@ export class AdvancedAnalysisService {
       // Validar dados de entrada
       if (!request.responses || request.responses.length === 0) {
         throw new Error('Nenhuma resposta fornecida para análise')
+      }
+
+      // Assumindo que 'isFinalResponse' é um campo no último objeto de resposta
+      // ou que a lista de respostas está completa quando este método é chamado para a análise final.
+      // Se a lógica de controle de fluxo estiver em outro lugar, este método pode ser simplificado.
+      const isFinalResponse = request.responses.some(r => r.isFinalResponse === true);
+
+      if (!isFinalResponse) {
+        console.log('⏳ Aguardando a resposta final para iniciar a análise completa...');
+        // Retorna um resultado parcial ou um indicador de que a análise está pendente
+        return {
+          personalityProfile: this.getDefaultPersonalityProfile(),
+          beliefSystem: this.getDefaultBeliefSystem(),
+          knowledgeDomain: this.getDefaultKnowledgeDomain(),
+          linguisticPatterns: this.getDefaultLinguisticPatterns(),
+          voiceCloningData: this.getDefaultVoiceCloningData([]),
+          behaviorModel: this.getDefaultBehaviorModel(),
+          growthAreas: this.getDefaultGrowthAreas(),
+          improvementStrategies: this.getDefaultImprovementStrategies(),
+          intrinsicMotivations: this.getDefaultIntrinsicMotivations(),
+          communicationPatterns: this.getDefaultCommunicationPatterns(),
+          decisionMakingStyle: this.getDefaultDecisionMakingStyle(),
+          fineTuningDataset: [],
+          confidenceScore: 0,
+          limitations: ['Análise pendente: aguardando todas as respostas.']
+        };
       }
 
       // Compilar todas as transcrições para análise
