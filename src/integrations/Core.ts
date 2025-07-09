@@ -1,7 +1,6 @@
 // Integrações REAIS para DNA UP Platform - UPLOAD IMEDIATO
 import { supabaseStorageService } from './SupabaseStorageService'
 import { FineTuningDatasetGenerator } from './FineTuningDatasetGenerator'
-// Fix: Import path corrected
 import { AdvancedAnalysisService } from './AdvancedAnalysisService'
 
 export interface LLMRequest {
@@ -39,7 +38,10 @@ export interface FileUploadResponse {
   transcription_url?: string
 }
 
-// Fix: Create instance of AdvancedAnalysisService
+// Export the services that are being imported
+export { supabaseStorageService, FineTuningDatasetGenerator }
+
+// Create instance of AdvancedAnalysisService
 const advancedAnalysisService = new AdvancedAnalysisService()
 
 // Transcrição real usando Deepgram
@@ -113,7 +115,8 @@ export async function analyzeSentiment(text: string): Promise<LLMResponse> {
   }
 }
 
-async function generatePsychologicalAnalysis(
+// EXPORTED: Análise psicológica usando Gemini
+export async function generatePsychologicalAnalysis(
   responses: string[],
   analysisDepth: string,
   responseCount: number,
