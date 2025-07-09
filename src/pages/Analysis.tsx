@@ -43,7 +43,7 @@ export default function Analysis() {
       console.log('🔄 Inicializando sessão de análise...')
       const currentUser = await User.me();
       setUser(currentUser);
-     
+      
       // Verificar se existe sessão ativa
       const activeSessions = await AnalysisSession.filter(
         { user_email: currentUser.email, status: 'active' },
@@ -95,7 +95,7 @@ export default function Analysis() {
       console.error('❌ Nenhuma sessão ativa')
       return;
     }
-   
+    
     console.log('📝 Processando resposta de texto...', { 
       textLength: textResponse.length,
       sessionId: currentSession.id,
@@ -105,7 +105,7 @@ export default function Analysis() {
     setIsProcessing(true);
     setUploadStatus("Iniciando processamento...");
     setProcessingSteps([]);
-   
+    
     try {
       const currentQuestion = DNA_ANALYSIS_QUESTIONS[currentQuestionIndex];
       
@@ -166,14 +166,14 @@ export default function Analysis() {
       setTimeout(() => {
         handleNextQuestion();
       }, 3000);
-     
+      
     } catch (error) {
       console.error("❌ Erro ao processar resposta de texto:", error);
       setTranscript("Erro ao processar a resposta. Tente novamente.");
       setUploadStatus("❌ Erro no processamento");
       updateProcessingStep("❌ Erro no processamento", 'error');
     }
-   
+    
     setIsProcessing(false);
   };
 
@@ -192,7 +192,7 @@ export default function Analysis() {
       console.error('❌ Nenhuma sessão ativa')
       return;
     }
-   
+    
     console.log('🎤 Processando gravação...', { 
       duration, 
       sessionId: currentSession.id,
@@ -202,7 +202,7 @@ export default function Analysis() {
     setIsProcessing(true);
     setUploadStatus("Iniciando processamento...");
     setProcessingSteps([]);
-   
+    
     try {
       const currentQuestion = DNA_ANALYSIS_QUESTIONS[currentQuestionIndex];
       
@@ -214,7 +214,7 @@ export default function Analysis() {
       const audioFile = new File([audioBlob], `${user.email}_q${currentQuestionIndex + 1}_${Date.now()}.wav`, {
         type: 'audio/wav'
       });
-     
+      
       const uploadResult = await UploadFile({ 
         file: audioFile,
         userEmail: user.email,
@@ -290,14 +290,14 @@ export default function Analysis() {
       setTimeout(() => {
         handleNextQuestion();
       }, 3000);
-     
+      
     } catch (error) {
       console.error("❌ Erro ao processar gravação:", error);
       setTranscript("Erro ao processar a gravação. Tente novamente.");
       setUploadStatus("❌ Erro no processamento");
       updateProcessingStep("❌ Erro no processamento", 'error');
     }
-   
+    
     setIsProcessing(false);
   };
 
@@ -313,7 +313,7 @@ export default function Analysis() {
       setAudioEnded(false);
       setUploadStatus("");
       setProcessingSteps([]);
-     
+      
       await AnalysisSession.update(currentSession.id, {
         current_question: nextIndex + 1,
         progress_percentage: progressPercentage
@@ -327,12 +327,12 @@ export default function Analysis() {
 
   const completeSessionAndGenerateAnalysis = async () => {
     setIsGeneratingReport(true);
-   
+    
     try {
       console.log('📊 Buscando todas as respostas da sessão...')
       // Buscar todas as respostas da sessão
       const responses = await UserResponse.filter({ session_id: currentSession.id });
-     
+      
       // Compilar todas as transcrições
       const transcriptions = responses
         .sort((a, b) => a.question_index - b.question_index)
@@ -365,11 +365,11 @@ export default function Analysis() {
       console.log('🎤 Dados de voz:', reportAndDataset.voiceCloningData.length, 'arquivos')
 
       setSessionCompleted(true);
-     
+      
     } catch (error) {
       console.error("❌ Erro ao gerar análise:", error);
     }
-   
+    
     setIsGeneratingReport(false);
   };
 
@@ -491,7 +491,7 @@ export default function Analysis() {
   return (
     <div className="min-h-screen bg-dark-bg neural-bg p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-       
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Button
@@ -502,7 +502,7 @@ export default function Analysis() {
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </Button>
-         
+          
           <div className="text-center">
             <h1 className="text-2xl font-bold text-text-primary text-glow-orange">Análise DNA UP Completa</h1>
             <p className="text-text-secondary">
@@ -512,7 +512,7 @@ export default function Analysis() {
               {currentDomain}
             </p>
           </div>
-         
+          
           <div className="w-20" />
         </div>
 
@@ -590,7 +590,7 @@ export default function Analysis() {
 
         {/* Main Content */}
         <div className="space-y-8">
-         
+          
           {/* Question Display */}
           <QuestionDisplay
             question={DNA_ANALYSIS_QUESTIONS[currentQuestionIndex].text}
