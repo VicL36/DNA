@@ -190,15 +190,10 @@ export class AdvancedAnalysisService {
         throw new Error('Nenhuma resposta fornecida para análise')
       }
 
-      // FIX: Changed the logic to be more robust.
-      // Instead of relying on a fragile 'isFinalResponse' flag, we now check
-      // if the number of responses has reached the protocol's total (108).
-      // This ensures the final analysis runs as soon as all questions are answered.
       const isAnalysisComplete = request.responses.length >= 108;
 
       if (!isAnalysisComplete) {
         console.log('⏳ Aguardando todas as 108 respostas para iniciar a análise completa...');
-        // Retorna um resultado parcial ou um indicador de que a análise está pendente
         return {
           personalityProfile: this.getDefaultPersonalityProfile(),
           beliefSystem: this.getDefaultBeliefSystem(),
@@ -272,6 +267,66 @@ export class AdvancedAnalysisService {
     }
   }
 
+  private async callGeminiAPI(prompt: string): Promise<string> {
+    if (!this.geminiApiKey) {
+      throw new Error('Gemini API key não configurada')
+    }
+
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${this.geminiApiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API error: ${response.status} - ${response.statusText} - ${errorText}`)
+    }
+
+    const result = await response.json()
+    
+    if (!result.candidates || !result.candidates[0] || !result.candidates[0].content) {
+      throw new Error('Resposta inválida da API Gemini')
+    }
+
+    return result.candidates[0].content.parts[0].text || 'Análise não disponível'
+  }
+  
+  // ... (o restante dos métodos de análise e parsing permanecem os mesmos)
+  
   private async analyzePersonalityProfile(transcriptions: string): Promise<PersonalityProfile> {
     const prompt = `
 # Análise de Perfil de Personalidade - Protocolo Clara R.
@@ -944,64 +999,8 @@ Retorne APENAS um array JSON com 10 exemplos no formato:
       return []
     }
   }
-
-  private async callGeminiAPI(prompt: string): Promise<string> {
-    if (!this.geminiApiKey) {
-      throw new Error('Gemini API key não configurada')
-    }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${this.geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status} - ${response.statusText}`)
-    }
-
-    const result = await response.json()
-    
-    if (!result.candidates || !result.candidates[0] || !result.candidates[0].content) {
-      throw new Error('Resposta inválida da API Gemini')
-    }
-
-    return result.candidates[0].content.parts[0].text || 'Análise não disponível'
-  }
-
-  // Métodos de parsing melhorados com validação
+  
+  // ... (o restante dos métodos de parsing e de fallback permanecem os mesmos)
   private parsePersonalityProfile(response: string): PersonalityProfile {
     try {
       const cleanResponse = this.cleanJsonResponse(response)
