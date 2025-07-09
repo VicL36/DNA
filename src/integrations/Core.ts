@@ -237,8 +237,6 @@ export async function generateAnalysis(transcriptions: string[]): Promise<LLMRes
   try {
     console.log('🧠 Gerando análise psicológica completa...')
     
-    const combinedTranscriptions = transcriptions.join('\n\n---\n\n')
-    
     // Usar análise psicológica do Gemini
     const analysisResult = await generatePsychologicalAnalysis(
       transcriptions,
@@ -275,8 +273,9 @@ export async function analyzeSentiment(text: string): Promise<LLMResponse> {
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
     }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -292,7 +291,7 @@ export async function analyzeSentiment(text: string): Promise<LLMResponse> {
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
+      throw new Error(`Gemini API error: ${JSON.stringify(errorData)}`)
     }
 
     const data = await response.json()
@@ -320,7 +319,8 @@ export async function generatePsychologicalAnalysis(
 
     const prompt = `Com base nas seguintes ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas, gere uma análise psicológica detalhada com profundidade ${analysisDepth}. Inclua um resumo executivo, análise de personalidade, insights chave, padrões comportamentais, recomendações e uma análise de domínio. As respostas são:\n\n${responses.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -336,7 +336,7 @@ export async function generatePsychologicalAnalysis(
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
+      throw new Error(`Gemini API error: ${JSON.stringify(errorData)}`)
     }
 
     const data = await response.json()
@@ -345,62 +345,6 @@ export async function generatePsychologicalAnalysis(
     return { analysis_document }
   } catch (error) {
     console.error('Error generating psychological analysis:', error)
-    throw error
-  }
-}
-
-// Geração de documento de análise usando Gemini
-export async function generateAnalysisDocument(
-  analysisDepth: string,
-  responseCount: number,
-): Promise<LLMResponse> {
-  try {
-    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
-
-    if (!geminiApiKey) {
-      throw new Error('Gemini API key not found in environment variables.')
-    }
-
-    let analysisSummary = '';
-    if (responseCount > 50) {
-      analysisSummary = 'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.';
-    } else if (responseCount > 20) {
-      analysisSummary = 'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.';
-    } else {
-      analysisSummary = 'Ainda não há dados suficientes para uma análise aprofundada. Recomenda-se coletar mais respostas para obter um perfil mais completo.';
-    }
-
-    const analysisText = `\n# ANÁLISE PSICOLÓGICA ${analysisDepth} - PROTOCOLO CLARA R.\n\n## Resumo Executivo\nAnálise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. \n\n${analysisSummary}`;
-
-    return {
-      analysis_document: analysisText,
-    }
-  } catch (error) {
-    console.error('Error generating analysis document:', error)
-    throw error
-  }
-}
-
-// Geração de documento de análise avançada usando Gemini
-export async function generateAdvancedAnalysisDocument(
-  analysisDepth: string,
-  responseCount: number,
-): Promise<LLMResponse> {
-  try {
-    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
-
-    if (!geminiApiKey) {
-      throw new Error('Gemini API key not found in environment variables.')
-    }
-
-    const analysisDocument = advancedAnalysisService.generateAnalysisDocument(
-      analysisDepth,
-      responseCount,
-    )
-
-    return { analysis_document: analysisDocument }
-  } catch (error) {
-    console.error('Error generating advanced analysis document:', error)
     throw error
   }
 }
@@ -418,7 +362,8 @@ export async function generateKeyInsights(
 
     const prompt = `Com base nas seguintes respostas, gere 5 insights chave sobre a personalidade do indivíduo:\n\n${responses.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -434,7 +379,7 @@ export async function generateKeyInsights(
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
+      throw new Error(`Gemini API error: ${JSON.stringify(errorData)}`)
     }
 
     const data = await response.json()
@@ -460,7 +405,8 @@ export async function generateBehavioralPatterns(
 
     const prompt = `Com base nas seguintes respostas, identifique 3 padrões comportamentais predominantes:\n\n${responses.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -476,7 +422,7 @@ export async function generateBehavioralPatterns(
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
+      throw new Error(`Gemini API error: ${JSON.stringify(errorData)}`)
     }
 
     const data = await response.json()
@@ -502,7 +448,8 @@ export async function generateRecommendations(
 
     const prompt = `Com base nas seguintes respostas, gere 3 recomendações personalizadas para o indivíduo:\n\n${responses.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -518,7 +465,7 @@ export async function generateRecommendations(
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
+      throw new Error(`Gemini API error: ${JSON.stringify(errorData)}`)
     }
 
     const data = await response.json()
@@ -544,7 +491,8 @@ export async function generatePersonalitySummary(
 
     const prompt = `Com base nas seguintes respostas, gere um resumo conciso da personalidade do indivíduo:\n\n${responses.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // FIX: Using the correct model name 'gemini-1.5-pro-latest'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -560,7 +508,7 @@ export async function generatePersonalitySummary(
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
+      throw new Error(`Gemini API error: ${JSON.stringify(errorData)}`)
     }
 
     const data = await response.json()
@@ -581,123 +529,4 @@ function extractKeywords(text: string): string[] {
   return words
     .filter(word => word.length > 3 && !stopWords.includes(word))
     .slice(0, 10)
-}
-
-function generateReportContent(userEmail: string, analysisResult: LLMResponse, responses: any[]): string {
-  const reportDate = new Date().toLocaleDateString('pt-BR')
-  
-  return `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Análise Psicológica - DNA UP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-        }
-        h2 {
-            color: #34495e;
-            margin-top: 30px;
-        }
-        .meta-info {
-            background: #ecf0f1;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .insights {
-            background: #e8f5e8;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        .patterns {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        .recommendations {
-            background: #d1ecf1;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        ul {
-            margin: 10px 0;
-        }
-        li {
-            margin: 5px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Relatório de Análise Psicológica</h1>
-        
-        <div class="meta-info">
-            <p><strong>Usuário:</strong> ${userEmail}</p>
-            <p><strong>Data:</strong> ${reportDate}</p>
-            <p><strong>Respostas Analisadas:</strong> ${responses.length}</p>
-            <p><strong>Confiança da Análise:</strong> ${((analysisResult.confidence_score || 0.9) * 100).toFixed(1)}%</p>
-        </div>
-
-        <h2>Análise Completa</h2>
-        <div>${analysisResult.analysis_document || 'Análise não disponível'}</div>
-
-        <h2>Resumo de Personalidade</h2>
-        <div>${analysisResult.personality_summary || 'Resumo não disponível'}</div>
-
-        <h2>Insights Chave</h2>
-        <div class="insights">
-            <ul>
-                ${(analysisResult.key_insights || []).map(insight => `<li>${insight}</li>`).join('')}
-            </ul>
-        </div>
-
-        <h2>Padrões Comportamentais</h2>
-        <div class="patterns">
-            <ul>
-                ${(analysisResult.behavioral_patterns || []).map(pattern => `<li>${pattern}</li>`).join('')}
-            </ul>
-        </div>
-
-        <h2>Recomendações</h2>
-        <div class="recommendations">
-            <ul>
-                ${(analysisResult.recommendations || []).map(rec => `<li>${rec}</li>`).join('')}
-            </ul>
-        </div>
-
-        <h2>Dados Técnicos</h2>
-        <div class="meta-info">
-            <p><strong>Tom Emocional:</strong> ${analysisResult.emotional_tone || 'Não definido'}</p>
-            <p><strong>Palavras-chave:</strong> ${(analysisResult.keywords || []).join(', ')}</p>
-            <p><strong>Método:</strong> Protocolo Clara R. - 108 perguntas estratégicas</p>
-            <p><strong>Processamento:</strong> Gemini AI + Deepgram</p>
-        </div>
-    </div>
-</body>
-</html>
-  `
 }
