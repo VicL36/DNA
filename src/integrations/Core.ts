@@ -58,10 +58,24 @@ export { supabaseStorageService, FineTuningDatasetGenerator }
 // Create instance of AdvancedAnalysisService
 const advancedAnalysisService = new AdvancedAnalysisService()
 
+// Helper to get environment variables in both Vite and Node.js
+const getEnv = (key: string): string | undefined => {
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    return import.meta.env[key];
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
+
 // Transcrição real usando Deepgram
 export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
   try {
-    const deepgramApiKey = import.meta.env.VITE_DEEPGRAM_API_KEY
+    const deepgramApiKey = getEnv('VITE_DEEPGRAM_API_KEY');
 
     if (!deepgramApiKey) {
       throw new Error('Deepgram API key not found in environment variables.')
@@ -181,8 +195,6 @@ export async function generateFinalReportAndDataset(
       analysisResult
     );
     
-    // FIX: Removed JSON.stringify. The 'uploadFineTuningDataset' method expects an array, not a string.
-    // This will pass the dataset array directly to the service, resolving the ".map is not a function" error.
     const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
       dataset,
       userEmail
@@ -258,7 +270,7 @@ export async function generateAnalysis(transcriptions: string[]): Promise<LLMRes
 // Análise de sentimento usando Gemini
 export async function analyzeSentiment(text: string): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -300,7 +312,7 @@ export async function generatePsychologicalAnalysis(
   responseCount: number,
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -343,7 +355,7 @@ export async function generateAnalysisDocument(
   responseCount: number,
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -375,7 +387,7 @@ export async function generateAdvancedAnalysisDocument(
   responseCount: number,
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -398,7 +410,7 @@ export async function generateKeyInsights(
   responses: string[],
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -440,7 +452,7 @@ export async function generateBehavioralPatterns(
   responses: string[],
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -482,7 +494,7 @@ export async function generateRecommendations(
   responses: string[],
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
@@ -524,7 +536,7 @@ export async function generatePersonalitySummary(
   responses: string[],
 ): Promise<LLMResponse> {
   try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const geminiApiKey = getEnv('VITE_GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not found in environment variables.')
