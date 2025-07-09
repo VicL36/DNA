@@ -175,16 +175,16 @@ export async function generateFinalReportAndDataset(
     )
     
     // Gerar dataset de fine-tuning
-    const datasetGenerator = new FineTuningDatasetGenerator()
-    
-    // FIX: The previous attempts ('generateDataset', 'createDataset', 'generate') were incorrect.
-    // Trying a more descriptive name.
-    // IF THIS FAILS: You MUST check the 'FineTuningDatasetGenerator.ts' file
-    // and find the correct public method name for generating the dataset.
-    const dataset = await datasetGenerator.generateFineTuningDataset(userEmail, responses)
+    // FIX: 'generateDataset' is a static method and requires 'analysisResult' as the third argument.
+    // It should be called directly on the class, not on an instance.
+    const dataset = FineTuningDatasetGenerator.generateDataset(
+      userEmail,
+      responses,
+      analysisResult
+    );
     
     const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
-      dataset,
+      JSON.stringify(dataset, null, 2), // Ensure the dataset is a string for upload
       userEmail
     )
     
