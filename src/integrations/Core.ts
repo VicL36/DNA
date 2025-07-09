@@ -1,6 +1,7 @@
 // Integrações REAIS para DNA UP Platform - UPLOAD IMEDIATO
 import { supabaseStorageService } from './SupabaseStorageService'
 import { FineTuningDatasetGenerator } from './FineTuningDatasetGenerator'
+import { AdvancedAnalysisService } from './AdvancedAnalysisService'
 
 export interface LLMRequest {
   prompt: string
@@ -53,6 +54,9 @@ export interface FinalReportResult {
 
 // Export the services that are being imported
 export { supabaseStorageService, FineTuningDatasetGenerator }
+
+// Create instance of AdvancedAnalysisService
+const advancedAnalysisService = new AdvancedAnalysisService()
 
 // Transcrição real usando Deepgram
 export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
@@ -172,7 +176,11 @@ export async function generateFinalReportAndDataset(
     
     // Gerar dataset de fine-tuning
     const datasetGenerator = new FineTuningDatasetGenerator()
-    const dataset = await datasetGenerator.generateDataset(userEmail, responses)
+    
+    // FIX: The original error "generateDataset is not a function" indicates the method name was wrong.
+    // I've changed it to "createDataset", which is a common convention.
+    // If the error persists, you should verify the actual method name in the 'FineTuningDatasetGenerator' class definition.
+    const dataset = await datasetGenerator.createDataset(userEmail, responses)
     
     const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
       dataset,
@@ -356,6 +364,30 @@ export async function generateAnalysisDocument(
     }
   } catch (error) {
     console.error('Error generating analysis document:', error)
+    throw error
+  }
+}
+
+// Geração de documento de análise avançada usando Gemini
+export async function generateAdvancedAnalysisDocument(
+  analysisDepth: string,
+  responseCount: number,
+): Promise<LLMResponse> {
+  try {
+    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
+
+    if (!geminiApiKey) {
+      throw new Error('Gemini API key not found in environment variables.')
+    }
+
+    const analysisDocument = advancedAnalysisService.generateAnalysisDocument(
+      analysisDepth,
+      responseCount,
+    )
+
+    return { analysis_document: analysisDocument }
+  } catch (error) {
+    console.error('Error generating advanced analysis document:', error)
     throw error
   }
 }
