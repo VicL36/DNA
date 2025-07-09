@@ -3,10 +3,9 @@ import { AnalysisSession, UserResponse } from "@/entities/all";
 import { User } from "@/entities/User";
 import { 
   transcribeAudio, 
-  generateAnalysis, 
-  UploadFile, 
-  saveTranscriptionToStorage,
-  generateFinalReportAndDataset 
+  generatePsychologicalAnalysis as generateAnalysis, 
+  supabaseStorageService, 
+  FineTuningDatasetGenerator 
 } from "@/integrations/Core";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -112,15 +111,13 @@ export default function Analysis() {
       // 1. Salvar transcrição no Supabase Storage (usando o texto como transcrição)
       updateProcessingStep("📝 Salvando resposta no Supabase Storage", 'processing');
       setUploadStatus("📝 Salvando resposta no Supabase Storage...");
-      console.log('📝 Salvando resposta de texto no Supabase Storage...')
-      const transcriptionUpload = await saveTranscriptionToStorage(
+      console.log("📝 Salvando resposta de texto no Supabase Storage...")
+      const transcriptionUpload = await supabaseStorageService.saveTranscriptionToStorage(
         textResponse,
         user.email,
         currentQuestionIndex + 1,
         currentQuestion.text
       );
-      console.log('✅ Resposta salva no Supabase Storage:', transcriptionUpload.fileUrl)
-      updateProcessingStep("📝 Salvando resposta no Supabase Storage", 'completed');
 
       // 2. Salvar resposta no banco de dados
       updateProcessingStep("💾 Salvando no banco de dados", 'processing');
@@ -145,7 +142,7 @@ export default function Analysis() {
       setUploadStatus("✅ Tudo salvo com sucesso!");
 
       // Gerar relatório final + Dataset de Fine-tuning após cada resposta
-      await generateFinalReportAndDataset(
+      await FineTuningDatasetGenerator.generateFinalReportAndDataset(
         user.email,
         { transcription: textResponse, emotional_tone: 'text_response', keywords: extractKeywordsFromText(textResponse) }, // Usar o texto como transcrição para análise
         [{ // Criar um array com a resposta atual para o dataset
@@ -215,7 +212,7 @@ export default function Analysis() {
         type: 'audio/wav'
       });
      
-      const uploadResult = await UploadFile({ 
+      const uploadResult = await supabaseStorageService.uploadFile({ 
         file: audioFile,
         userEmail: user.email,
         questionIndex: currentQuestionIndex + 1,
@@ -237,8 +234,9 @@ export default function Analysis() {
       updateProcessingStep("📝 Salvando transcrição no Supabase Storage", 'processing');
       setUploadStatus("📝 Salvando transcrição no Supabase Storage...");
       console.log('📝 Salvando transcrição no Supabase Storage...')
-      const transcriptionUpload = await saveTranscriptionToStorage(
-        transcriptionResult.transcription || '',
+      console.log("📝 Salvando resposta de texto no Supabase Storage...")
+      const transcriptionUpload = await supabaseStorageService.saveTranscriptionToStorage(
+        transcriptionResult.transcription || ",
         user.email,
         currentQuestionIndex + 1,
         currentQuestion.text
@@ -269,14 +267,14 @@ export default function Analysis() {
       setUploadStatus("✅ Tudo salvo com sucesso!");
 
       // Gerar relatório final + Dataset de Fine-tuning após cada resposta
-      await generateFinalReportAndDataset(
+      await FineTuningDatasetGenerator.generateFinalReportAndDataset(
         user.email,
-        transcriptionResult, // Usar a transcrição atual para análise
+        { transcription: transcriptionResult.transcription || "", emotional_tone: transcriptionResult.emotional_tone || null, keywords: transcriptionResult.keywords || [] },
         [{ // Criar um array com a resposta atual para o dataset
           question_index: currentQuestionIndex + 1,
           question_text: currentQuestion.text,
           question_domain: currentQuestion.domain,
-          transcript_text: transcriptionResult.transcription || "Transcrição em processamento...",
+          transcript_text: transcriptionResult.transcription || "",
           audio_duration: duration,
           audio_file_url: uploadResult.file_url,
           drive_file_id: uploadResult.storage_file_id,
