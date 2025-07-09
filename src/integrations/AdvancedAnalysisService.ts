@@ -1,23 +1,38 @@
-// Serviço de Análise Psicológica Avançada - DNA UP Platform
-// Versão Final: Implementa o "Manual de Personificação" completo, baseado no "Extrator de DNA do Expert".
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// --- INTERFACES DE DADOS ESTRUTURADAS PARA O MANUAL ---
+// ============================================================================
+// INTERFACES E TIPOS DO MANUAL DE PERSONIFICAÇÃO
+// ============================================================================
 
-export interface AdvancedAnalysisRequest {
-  userEmail: string;
-  responses: any[];
-  audioFiles: string[];
+interface UserResponse {
+  question_index: number;
+  question_domain: string;
+  question_text: string;
+  transcript_text: string;
 }
 
-export interface PersonalityProfile {
+interface AnalysisRequest {
+  userEmail: string;
+  responses: UserResponse[];
+  audioFiles: any[];
+}
+
+interface DocumentalAnalysis {
+  documentTypes: string[];
+  timePeriod: string;
+  consistency: string;
+  identifiedGaps: string[];
+}
+
+interface PersonalityProfile {
   communicationStyle: {
     formality: string;
     directness: string;
     technicalLevel: string;
     humorUsage: {
-      frequency: string;
-      type: string[];
-      contexts: string[];
+        frequency: string;
+        type: string[];
+        contexts: string[];
     };
     characteristicExpressions: string[];
     syntacticPatterns: string[];
@@ -30,7 +45,7 @@ export interface PersonalityProfile {
     processingSpeed: string;
   };
   emotionalResponse: {
-    strongTriggers: string[];
+    triggers: string[];
     stressPatterns: string[];
     regulationStrategies: string[];
     enthusiasmTriggers: string[];
@@ -43,434 +58,319 @@ export interface PersonalityProfile {
   };
 }
 
-export interface BeliefSystem {
+interface BeliefsAndValues {
   fundamentalValues: string[];
   ethicalPrinciples: string[];
   worldViews: {
     humanNature: string;
     organizations: string;
-    changeAndProgress: string;
+    progress: string;
   };
   personalPhilosophy: {
     decisionMaking: string;
-    riskAttitude: string;
+    riskApproach: string;
     successDefinition: string;
   };
-  thoughtEvolution: {
-    detectedChanges: string[];
-    pivotalEvents: string[];
-  };
+  thoughtEvolution: string[];
 }
 
-export interface KnowledgeDomain {
+interface KnowledgeDomain {
   expertiseAreas: string[];
   intellectualInterests: string[];
   knowledgeGaps: string[];
-  authorityTopics: string[];
-  informationSources: string[];
 }
 
-export interface MotivationsAndIntentions {
-    expressedObjectives: {
-        shortTermGoals: string[];
-        longTermGoals: string[];
-        successCriteria: string;
-    };
-    internalMotivators: {
-        meaningAndPurpose: string[];
-        satisfactionSources: string[];
-    };
-    aversionsAndAvoidances: {
-        avoidedSituations: string[];
-        resistanceTriggers: string[];
-        procrastinationPatterns: string;
-    };
-}
-
-export interface BiographicalContext {
-    formativeExperiences: {
-        significantEvents: string[];
-        influentialRelationships: string[];
-        challengesFaced: string;
-    };
-    professionalTrajectory: {
-        mentionedExperiences: string[];
-        significantProjects: string[];
-        workPhilosophy: string;
-    };
-    keyRelationships: {
-        recurringDynamics: string;
-        collaborationAndConflictPatterns: string;
-    };
-}
-
-export interface LinguisticPatterns {
-    characteristicVocabulary: string[];
-    semanticFields: string[];
-    technicalTerms: string[];
-    textStructure: {
-        sentenceLength: string;
-        paragraphStyle: string;
-        argumentationPatterns: string[];
-    };
-    stylisticMarkers: {
-        humor: string[];
-        formality: string[];
-        audienceAdaptation: string[];
-    };
-}
-
-export interface OperationalSpecs {
-  comunicacionais: {
-    vocabularioNucleo: string[];
-    estruturasFrasais: string[];
-    formalidadeCasualidade: string;
-    usoDeHumor: string;
-    sequenciasLogicas: string;
+interface MotivationsAndIntentions {
+  expressedGoals: {
+    shortTerm: string[];
+    longTerm: string[];
   };
-  comportamentais: {
-    inicioDesenvolvimentoFim: string;
-    contextualizacaoVsObjetividade: string;
-    estrategiasDeQualificacao: string;
-    tendenciasDeExemplificacao: string;
-    mecanismosDeRegulacao: string;
+  internalMotivators: string[];
+  aversionsAndAvoidances: string[];
+}
+
+interface BiographicalContext {
+  formativeExperiences: string[];
+  professionalTrajectory: string[];
+  keyRelationships: string[];
+}
+
+interface LinguisticPatterns {
+  characteristicVocabulary: string[];
+  textStructure: {
+    sentenceLength: string;
+    argumentationPatterns: string[];
   };
-  reacionais: {
-    gatilhosEmocionais: string;
-    ativadoresModoTecnicoPessoalFilosofico: string;
-    assuntosDeEntusiasmo: string;
-    contextosDeReflexao: string;
+  stylisticMarkers: string[];
+}
+
+interface BehaviorModel {
+  condensedProfile: string;
+  responseGuidelines: {
+    topicsToAvoid: string[];
+    preferredTopics: string[];
+    communicationRules: string[];
+  };
+  dialogueExamples: Array<{
+    question: string;
+    response: string;
+    rationale: string;
+  }>;
+}
+
+interface OperationalSpecifications {
+  communicational: {
+    coreVocabulary: string[];
+    sentenceStructures: string[];
+    humorPatterns: string[];
+  };
+  behavioral: {
+    responseInitiation: string[];
+    responseConclusion: string[];
+    exampleUsage: string[];
+  };
+  reactional: {
+    emotionalTriggers: string[];
+    modeChanges: string[];
+    adaptationPatterns: string[];
   };
 }
 
-export interface DomainAnalysis {
+interface DomainQuantitativeAnalysis {
   domain: string;
   score: number;
-  evaluation: string;
+  evaluation: 'Crítico' | 'Em Desenvolvimento' | 'Sólido' | 'Excepcional';
   summary: string;
 }
 
-export interface BehaviorModel {
-    condensedProfile: string;
-    responseGuidelines: {
-        engagementTopics: string[];
-        cautionTopics: string[];
-        communicationStyle: string[];
-        decisionValues: string[];
-    };
-    dialogueExamples: Array<{
-        situation: string;
-        response: string;
-    }>;
+interface ReliabilityAssessment {
+  confidenceLevel: 'Baixa' | 'Média' | 'Alta' | 'Muito Alta';
+  areasForMoreData: string[];
+  modelAccuracy: string;
 }
 
-// --- ESTRUTURA FINAL DO MANUAL DE PERSONIFICAÇÃO ---
-export interface PersonificationManual {
-  corpusAnalysis: {
-    documentTypes: string[];
-    timeSpan: string;
-    consistency: string;
-    gaps: string[];
-  };
+interface PersonificationManual {
+  documentalAnalysis: DocumentalAnalysis;
   personalityProfile: PersonalityProfile;
-  beliefSystem: BeliefSystem;
+  beliefsAndValues: BeliefsAndValues;
   knowledgeDomain: KnowledgeDomain;
   motivationsAndIntentions: MotivationsAndIntentions;
   biographicalContext: BiographicalContext;
   linguisticPatterns: LinguisticPatterns;
   behaviorModel: BehaviorModel;
-  operationalSpecs: OperationalSpecs;
-  domainAnalysis: DomainAnalysis[];
-  reliabilityAssessment: {
-    confidence: string;
-    areasForMoreData: string[];
-    modelAccuracy: string;
+  operationalSpecifications: OperationalSpecifications;
+  quantitativeAnalysis: DomainQuantitativeAnalysis[];
+  reliabilityAssessment: ReliabilityAssessment;
+  metadata: {
+    generationDate: string;
+    userEmail: string;
+    totalResponses: number;
+    analysisVersion: string;
   };
-  fineTuningDataset: any[];
 }
 
-
-// Helper para obter variáveis de ambiente (compatível com Vite e Node.js)
-const getEnv = (key: string): string | undefined => {
-  // @ts-ignore
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    // @ts-ignore
-    return import.meta.env[key];
-  }
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env[key];
-  }
-  return undefined;
-};
+// ============================================================================
+// SERVIÇO DE ANÁLISE AVANÇADA
+// ============================================================================
 
 export class AdvancedAnalysisService {
-  private geminiApiKey: string;
+  private genAI: GoogleGenerativeAI;
+  private model: any;
 
   constructor() {
-    this.geminiApiKey = getEnv('VITE_GEMINI_API_KEY') || '';
-    if (!this.geminiApiKey) {
-      console.warn('⚠️ Gemini API Key não configurada');
+    const apiKey = process.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('VITE_GEMINI_API_KEY não encontrada nas variáveis de ambiente');
     }
-    console.log('🧠 Inicializando Serviço de Análise Avançada (Motor de Personificação v3.0)');
+    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
   }
 
-  async generatePersonificationManual(request: AdvancedAnalysisRequest): Promise<PersonificationManual> {
-    console.log(`🧬 Iniciando Extração de DNA do Expert para: ${request.userEmail}`);
-    if (!request.responses || request.responses.length < 108) {
-      throw new Error(`Análise completa requer no mínimo 108 respostas. Recebidas: ${request.responses.length}`);
-    }
+  // ============================================================================
+  // MÉTODO PRINCIPAL - GERAÇÃO DO MANUAL COMPLETO
+  // ============================================================================
 
-    const transcriptions = request.responses
-      .filter(r => r.transcript_text && r.transcript_text.trim().length > 5)
-      .sort((a, b) => (a.question_index || 0) - (b.question_index || 0))
-      .map(r => `[Domínio: ${r.question_domain}]\n[Pergunta ${r.question_index}]: ${r.question_text}\n[Resposta]: ${r.transcript_text}`)
-      .join('\n\n---\n\n');
-
-    console.log('🔬 Fase 1: Análise Sistemática e Extração de Padrões...');
-    const [
-        personalityProfile,
-        beliefSystem,
-        knowledgeDomain,
-        motivationsAndIntentions,
-        biographicalContext,
-        linguisticPatterns,
-        operationalSpecs,
-        domainAnalysis,
-        behaviorModel
-    ] = await Promise.all([
-        this.analyzePersonalityProfile(transcriptions),
-        this.analyzeBeliefSystem(transcriptions),
-        this.analyzeKnowledgeDomain(transcriptions),
-        this.analyzeMotivations(transcriptions),
-        this.analyzeBiography(transcriptions),
-        this.analyzeLinguisticPatterns(transcriptions),
-        this.extractOperationalSpecs(transcriptions),
-        this.analyzeAllDomains(request.responses),
-        this.createBehaviorModel(transcriptions)
-    ]);
+  async generatePersonificationManual(request: AnalysisRequest): Promise<PersonificationManual> {
+    console.log('🧬 Iniciando análise completa do DNA da personalidade...');
     
-    console.log('💾 Fase 2: Mapeamento e Construção do Manual de Personificação...');
-    const fineTuningDataset = await this.generateFineTuningDataset(request.userEmail, request.responses, behaviorModel);
-
-    const finalManual: PersonificationManual = {
-        corpusAnalysis: {
-            documentTypes: ['Respostas ao Protocolo Clara R.'],
-            timeSpan: `Sessão única em ${new Date().toLocaleDateString('pt-BR')}`,
-            consistency: 'Geralmente consistente, com algumas respostas curtas ou irrelevantes que foram filtradas para a análise profunda.',
-            gaps: ['Interações sociais em tempo real', 'Comunicação não-verbal', 'Reações a eventos inesperados']
-        },
+    const responses = request.responses;
+    const responseTexts = responses.map(r => 
+        `[Domínio: ${r.question_domain}] Pergunta ${r.question_index}: ${r.question_text}\nResposta: ${r.transcript_text}`
+    ).join('\n\n---\n\n');
+    
+    try {
+      // Executa todas as análises em paralelo para máxima eficiência
+      const [
+        documentalAnalysis,
         personalityProfile,
-        beliefSystem,
+        beliefsAndValues,
         knowledgeDomain,
         motivationsAndIntentions,
         biographicalContext,
         linguisticPatterns,
         behaviorModel,
-        operationalSpecs,
-        domainAnalysis,
-        reliabilityAssessment: {
-            confidence: 'Alta. A análise é baseada num volume extenso de respostas auto-reflexivas, permitindo a identificação de padrões consistentes.',
-            areasForMoreData: ['Reações a feedback negativo direto', 'Comportamento em situações de alta pressão não previstas no protocolo', 'Interações espontâneas fora do contexto de entrevista.'],
-            modelAccuracy: 'Estimada em 92-97% para os domínios cobertos, com base na consistência interna das respostas.'
-        },
-        fineTuningDataset
-    };
-
-    console.log('✅ Manual de Personificação gerado com sucesso!');
-    return finalManual;
-  }
-
-  private async callGeminiAPI(prompt: string, isJsonOutput: boolean = true): Promise<any> {
-    if (!this.geminiApiKey) throw new Error('A chave da API Gemini não está configurada');
-
-    const body: any = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-            temperature: 0.4,
-            topK: 32,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-        },
-        safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-        ]
-    };
-
-    if (isJsonOutput) {
-        body.generationConfig.responseMimeType = "application/json";
-    }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${this.geminiApiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Erro na API Gemini:", errorText);
-        throw new Error(`Erro na API Gemini: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    if(!result.candidates || !result.candidates[0].content.parts[0].text){
-        console.error("Resposta inválida da API Gemini:", result);
-        throw new Error("A API não retornou conteúdo válido.");
-    }
-    const textResponse = result.candidates[0].content.parts[0].text;
-    
-    if (isJsonOutput) {
-        try {
-            return JSON.parse(textResponse);
-        } catch (e) {
-            console.error("Falha ao parsear JSON da resposta da API:", textResponse);
-            throw new Error("A API não retornou um JSON válido.");
+        operationalSpecifications,
+        quantitativeAnalysis,
+        reliabilityAssessment
+      ] = await Promise.all([
+        this.analyzeDocumentalCorpus(responses),
+        this.extractPersonalityProfile(responseTexts),
+        this.mapBeliefsAndValues(responseTexts),
+        this.identifyKnowledgeDomains(responseTexts),
+        this.analyzeMotivationsAndIntentions(responseTexts),
+        this.extractBiographicalContext(responseTexts),
+        this.analyzeLinguisticPatterns(responseTexts),
+        this.constructBehaviorModel(responseTexts),
+        this.defineOperationalSpecifications(responseTexts),
+        this.performQuantitativeAnalysis(responses), // Agora baseado em IA
+        this.assessReliability(responseTexts)       // Agora baseado em IA
+      ]);
+      
+      // MONTAGEM DO MANUAL FINAL
+      const manual: PersonificationManual = {
+        documentalAnalysis,
+        personalityProfile,
+        beliefsAndValues,
+        knowledgeDomain,
+        motivationsAndIntentions,
+        biographicalContext,
+        linguisticPatterns,
+        behaviorModel,
+        operationalSpecifications,
+        quantitativeAnalysis,
+        reliabilityAssessment,
+        metadata: {
+          generationDate: new Date().toISOString(),
+          userEmail: request.userEmail,
+          totalResponses: responses.length,
+          analysisVersion: '3.0.0-FINAL'
         }
+      };
+      
+      console.log('✅ Manual de Personificação gerado com sucesso!');
+      return manual;
+      
+    } catch (error) {
+      console.error('❌ Erro crítico durante a geração do manual:', error);
+      throw error;
     }
-    return textResponse;
   }
 
-  // --- MÉTODOS DE ANÁLISE DETALHADA PARA CADA SECÇÃO DO MANUAL ---
+  // ============================================================================
+  // MÉTODOS DE ANÁLISE ESPECÍFICOS (usando a IA)
+  // ============================================================================
 
-  private async analyzePersonalityProfile(transcriptions: string): Promise<PersonalityProfile> {
-    console.log("...Analisando Perfil de Personalidade");
-    const prompt = `Analise as transcrições e extraia um Perfil de Personalidade detalhado e extenso. Forneça exemplos concretos para cada ponto. O output deve ser um JSON com a estrutura: {"communicationStyle": {...}, "thinkingPatterns": {...}, "emotionalResponse": {...}, "socialPosture": {...}}`;
-    return this.callGeminiAPI(prompt);
-  }
-
-  private async analyzeBeliefSystem(transcriptions: string): Promise<BeliefSystem> {
-    console.log("...Analisando Sistema de Crenças e Valores");
-    const prompt = `Analise as transcrições e extraia o Sistema de Crenças e Valores. Seja profundo na análise. O output deve ser um JSON com a estrutura: {"fundamentalValues": [...], "ethicalPrinciples": [...], "worldViews": {...}, "personalPhilosophy": {...}, "thoughtEvolution": {...}}`;
-    return this.callGeminiAPI(prompt);
+  private async callGeminiForJson(prompt: string): Promise<any> {
+    try {
+        const result = await this.model.generateContent(prompt);
+        const responseText = result.response.text();
+        // Limpa o texto para garantir que é um JSON válido
+        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanedText);
+    } catch (error) {
+        console.error("Erro ao chamar ou parsear a resposta da API Gemini:", error);
+        throw new Error("Falha na comunicação ou formatação da resposta da API.");
+    }
   }
   
-  private async analyzeKnowledgeDomain(transcriptions: string): Promise<KnowledgeDomain> {
-    console.log("...Analisando Domínio de Conhecimento");
-    const prompt = `Analise as transcrições e identifique o Domínio de Conhecimento do expert. O output deve ser um JSON com a estrutura: {"expertiseAreas": [...], "intellectualInterests": [...], "knowledgeGaps": [...], "authorityTopics": [...], "informationSources": [...]}`;
-    return this.callGeminiAPI(prompt);
+  private async analyzeDocumentalCorpus(responses: UserResponse[]): Promise<DocumentalAnalysis> {
+    console.log('📊 Analisando corpus documental...');
+    const prompt = `Baseado no conjunto de ${responses.length} respostas fornecidas, analise o corpus documental. Avalie a consistência, identifique o período de tempo e aponte possíveis lacunas na análise. Retorne um JSON com a estrutura: {"documentTypes": ["..."], "timePeriod": "...", "consistency": "...", "identifiedGaps": ["..."]}`;
+    return this.callGeminiForJson(prompt);
   }
 
-  private async analyzeLinguisticPatterns(transcriptions: string): Promise<LinguisticPatterns> {
-    console.log("...Analisando Padrões Linguísticos");
-    const prompt = `Analise as transcrições e extraia os Padrões Linguísticos Distintivos. O output deve ser um JSON com a estrutura: {"characteristicVocabulary": [...], "semanticFields": [...], "technicalTerms": [...], "textStructure": {...}, "stylisticMarkers": {...}}`;
-    return this.callGeminiAPI(prompt);
+  private async extractPersonalityProfile(responseTexts: string): Promise<PersonalityProfile> {
+    console.log('🧠 Extraindo perfil de personalidade...');
+    const prompt = `Analise o seguinte texto e extraia o perfil de personalidade detalhado. Seja profundo e use exemplos do texto para justificar. Retorne um JSON com a estrutura: {"communicationStyle": {...}, "thinkingPatterns": {...}, "emotionalResponse": {...}, "socialPosture": {...}} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
   }
 
-  private async analyzeMotivations(transcriptions: string): Promise<MotivationsAndIntentions> {
-    console.log("...Analisando Motivações e Intenções");
-    const prompt = `Analise as transcrições e extraia as Motivações e Intenções. O output deve ser um JSON com a estrutura: {"expressedObjectives": {...}, "internalMotivators": {...}, "aversionsAndAvoidances": {...}}`;
-    return this.callGeminiAPI(prompt);
+  private async mapBeliefsAndValues(responseTexts: string): Promise<BeliefsAndValues> {
+    console.log('🎯 Mapeando crenças e valores...');
+    const prompt = `Analise o texto e mapeie o sistema de crenças e valores. O output deve ser um JSON com a estrutura: {"fundamentalValues": [...], "ethicalPrinciples": [...], "worldViews": {...}, "personalPhilosophy": {...}, "thoughtEvolution": [...]} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
   }
 
-  private async analyzeBiography(transcriptions: string): Promise<BiographicalContext> {
-    console.log("...Analisando Contexto Biográfico");
-    const prompt = `Analise as transcrições e extraia o Contexto Biográfico Relevante. O output deve ser um JSON com a estrutura: {"formativeExperiences": {...}, "professionalTrajectory": {...}, "keyRelationships": {...}}`;
-    return this.callGeminiAPI(prompt);
+  private async identifyKnowledgeDomains(responseTexts: string): Promise<KnowledgeDomain> {
+    console.log('📚 Identificando domínios de conhecimento...');
+    const prompt = `Identifique os domínios de conhecimento do expert. O output deve ser um JSON com a estrutura: {"expertiseAreas": [...], "intellectualInterests": [...], "knowledgeGaps": [...]} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
   }
 
-  private async extractOperationalSpecs(transcriptions: string): Promise<OperationalSpecs> {
-    console.log("...Extraindo Especificações Operacionais para Clonagem");
-    const prompt = `Analise o texto e extraia parâmetros TÉCNICOS e REPRODUZÍVEIS para um agente de IA. Seja extremamente detalhado. O output deve ser um JSON com a estrutura: {"comunicacionais": {...}, "comportamentais": {...}, "reacionais": {...}}`;
-    return this.callGeminiAPI(prompt);
+  private async analyzeMotivationsAndIntentions(responseTexts: string): Promise<MotivationsAndIntentions> {
+    console.log('🎯 Analisando motivações e intenções...');
+    const prompt = `Analise as motivações e intenções. O output deve ser um JSON com a estrutura: {"expressedGoals": {...}, "internalMotivators": [...], "aversionsAndAvoidances": [...]} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
   }
 
-  private async analyzeAllDomains(responses: any[]): Promise<DomainAnalysis[]> {
-    console.log("...Analisando Domínios Quantitativamente");
-    const domains = [...new Set(responses.map(r => r.question_domain).filter(d => d))];
-    const domainAnalyses: DomainAnalysis[] = [];
+  private async extractBiographicalContext(responseTexts: string): Promise<BiographicalContext> {
+    console.log('📖 Extraindo contexto biográfico...');
+    const prompt = `Extraia o contexto biográfico relevante. O output deve ser um JSON com a estrutura: {"formativeExperiences": [...], "professionalTrajectory": [...], "keyRelationships": [...]} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
+  }
 
-    for (const domain of domains) {
-        const domainResponses = responses
-            .filter(r => r.question_domain === domain && r.transcript_text && r.transcript_text.length > 5)
-            .map(r => `[P${r.question_index}]: ${r.transcript_text}`)
-            .join('\n');
+  private async analyzeLinguisticPatterns(responseTexts: string): Promise<LinguisticPatterns> {
+    console.log('🔤 Analisando padrões linguísticos...');
+    const prompt = `Analise os padrões linguísticos. O output deve ser um JSON com a estrutura: {"characteristicVocabulary": [...], "textStructure": {...}, "stylisticMarkers": [...]} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
+  }
 
-        if (!domainResponses) continue;
+  private async constructBehaviorModel(responseTexts: string): Promise<BehaviorModel> {
+    console.log('🤖 Construindo modelo de comportamento...');
+    const prompt = `Construa um modelo de comportamento. Inclua um perfil condensado, diretrizes de resposta e 5 exemplos de diálogo realistas. O output deve ser um JSON com a estrutura: {"condensedProfile": "...", "responseGuidelines": {...}, "dialogueExamples": [...]} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
+  }
 
-        const prompt = `
-# Análise de Domínio Específico: ${domain}
-Analise as respostas do domínio "${domain}" e forneça uma análise detalhada. Baseie-se nos padrões, pontos fortes e fracos.
+  private async defineOperationalSpecifications(responseTexts: string): Promise<OperationalSpecifications> {
+    console.log('⚙️ Definindo especificações operacionais...');
+    const prompt = `Defina as especificações operacionais para um clone de IA. Seja técnico e preciso. O output deve ser um JSON com a estrutura: {"communicational": {...}, "behavioral": {...}, "reactional": {...}} \n\nTEXTO:\n${responseTexts}`;
+    return this.callGeminiForJson(prompt);
+  }
 
-[Respostas do Domínio]
-${domainResponses}
-
-Retorne APENAS um JSON com a seguinte estrutura:
-{
-  "domain": "${domain}",
-  "summary": "Um resumo conciso da performance e dos padrões neste domínio.",
-  "score": X.X,
-  "evaluation": "Crítico|Em Desenvolvimento|Sólido|Excepcional"
-}`;
+  private async performQuantitativeAnalysis(responses: UserResponse[]): Promise<DomainQuantitativeAnalysis[]> {
+    console.log('📈 Realizando análise quantitativa por domínio...');
+    const domains = [...new Set(responses.map(r => r.question_domain))];
+    const analysisPromises = domains.map(async (domain) => {
+      const domainResponses = responses.filter(r => r.question_domain === domain).map(r => r.transcript_text).join('\n');
+      const prompt = `
+        Analise a profundidade, consistência e clareza das seguintes respostas do domínio "${domain}". 
+        Com base na sua análise, atribua uma pontuação de 0.0 a 10.0 e uma avaliação.
         
-        try {
-            const analysis = await this.callGeminiAPI(prompt);
-            domainAnalyses.push(analysis);
-        } catch (error) {
-            console.error(`Falha ao analisar o domínio ${domain}:`, error);
+        Respostas do Domínio:
+        ${domainResponses}
+        
+        Retorne APENAS um JSON com a seguinte estrutura:
+        {
+          "domain": "${domain}",
+          "score": X.X,
+          "evaluation": "Crítico|Em Desenvolvimento|Sólido|Excepcional",
+          "summary": "Uma justificativa concisa para a pontuação e avaliação."
         }
-    }
-    return domainAnalyses;
+      `;
+      return this.callGeminiForJson(prompt);
+    });
+    return Promise.all(analysisPromises);
   }
-  
-  private async createBehaviorModel(transcriptions: string): Promise<BehaviorModel> {
-    console.log("...Criando Modelo de Comportamento e Diálogos");
+
+  private async assessReliability(responseTexts: string): Promise<ReliabilityAssessment> {
+    console.log('🔍 Avaliando confiabilidade do modelo...');
     const prompt = `
-# Criação de Modelo de Comportamento
-Com base nas transcrições, crie um modelo comportamental.
-
-[Transcrições]
-${transcriptions}
-
-Retorne APENAS um JSON com a seguinte estrutura:
-{
-  "condensedProfile": "Resumo de 2-3 parágrafos da essência da personalidade.",
-  "responseGuidelines": {
-    "engagementTopics": ["..."],
-    "cautionTopics": ["..."],
-    "communicationStyle": ["..."],
-    "decisionValues": ["..."]
-  },
-  "dialogueExamples": [
-    {
-      "situation": "Uma situação ou pergunta hipotética relevante.",
-      "response": "Uma resposta realista e detalhada no estilo da pessoa."
-    }
-  ]
-}`;
-      return this.callGeminiAPI(prompt);
-  }
-
-  private async generateFineTuningDataset(userEmail: string, responses: any[], behaviorModel: BehaviorModel): Promise<any[]> {
-    console.log('...Gerando Dataset de Fine-Tuning');
-    
-    const dataset = [];
-    
-    // Adicionar exemplos baseados nas respostas reais
-    for (const response of responses) {
-      if (response.question_text && response.transcript_text && response.transcript_text.length > 15) {
-        dataset.push({
-          "instruction": `Você é Clara R., uma mentora e especialista em comunicação ética. Sua personalidade é analítica, profunda e orientada a valores. Responda à seguinte pergunta com a sua voz autêntica.`,
-          "input": response.question_text,
-          "output": response.transcript_text,
-        });
+      Avalie a confiabilidade geral do conjunto de respostas fornecido. 
+      Considere a consistência, profundidade e possíveis vieses.
+      
+      Texto para Análise:
+      ${responseTexts}
+      
+      Retorne APENAS um JSON com a seguinte estrutura:
+      {
+        "confidenceLevel": "Baixa|Média|Alta|Muito Alta",
+        "areasForMoreData": ["área1", "área2"],
+        "modelAccuracy": "Estimativa da precisão do modelo em percentagem (ex: '90-95%')"
       }
-    }
-
-    // Adicionar exemplos sintéticos baseados no modelo comportamental
-    if (behaviorModel && behaviorModel.dialogueExamples) {
-        for(const example of behaviorModel.dialogueExamples) {
-            dataset.push({
-                "instruction": `Você é Clara R., uma mentora e especialista em comunicação ética. Sua personalidade é analítica, profunda e orientada a valores. Responda à seguinte pergunta com a sua voz autêntica.`,
-                "input": example.situation,
-                "output": example.response
-            });
-        }
-    }
-
-    console.log(`✅ Dataset de Fine-Tuning gerado com ${dataset.length} exemplos`);
-    return dataset;
+    `;
+    const result = await this.callGeminiForJson(prompt);
+    // A API do Gemini pode não retornar um número para a precisão, então garantimos que seja uma string.
+    result.modelAccuracy = String(result.modelAccuracy); 
+    return result;
   }
 }
