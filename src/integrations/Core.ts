@@ -175,16 +175,16 @@ export async function generateFinalReportAndDataset(
     )
     
     // Gerar dataset de fine-tuning
-    // FIX: 'generateDataset' is a static method and requires 'analysisResult' as the third argument.
-    // It should be called directly on the class, not on an instance.
     const dataset = FineTuningDatasetGenerator.generateDataset(
       userEmail,
       responses,
       analysisResult
     );
     
+    // FIX: Removed JSON.stringify. The 'uploadFineTuningDataset' method expects an array, not a string.
+    // This will pass the dataset array directly to the service, resolving the ".map is not a function" error.
     const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
-      JSON.stringify(dataset, null, 2), // Ensure the dataset is a string for upload
+      dataset,
       userEmail
     )
     
