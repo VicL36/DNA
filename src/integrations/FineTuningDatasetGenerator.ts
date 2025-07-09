@@ -143,6 +143,14 @@ export class FineTuningDatasetGenerator {
       .sort((a, b) => b.quality_score - a.quality_score) // Melhor qualidade primeiro
   }
 
+  // FIX: Added the missing 'extractPersonalityProfile' method.
+  // This method was being called but was not defined, causing the crash.
+  private static extractPersonalityProfile(response: any, analysisData: any): string {
+    // A simple implementation could be to return the overall summary.
+    // This can be made more complex to extract a profile specific to the response context.
+    return analysisData.personality_summary || "Perfil em análise";
+  }
+
   // Métodos auxiliares privados (implementações detalhadas)
   private static generateResponseAnalysis(response: any, analysisData: any): string {
     // Implementação detalhada da análise de resposta
@@ -262,12 +270,12 @@ export class FineTuningDatasetGenerator {
     const text = response.transcript_text || ""
     const markers = []
     
-    if (/\\b(feliz|alegria|contente|radiante|entusiasmado)\\b/i.test(text)) markers.push("alegria")
-    if (/\\b(triste|tristeza|melancolia|desapontado|abatido)\\b/i.test(text)) markers.push("tristeza")
-    if (/\\b(medo|receio|ansiedade|preocupado|nervoso)\\b/i.test(text)) markers.push("ansiedade")
-    if (/\\b(raiva|irritação|frustração|bravo|indignado)\\b/i.test(text)) markers.push("irritação")
-    if (/\\b(calmo|sereno|tranquilo|relaxado|paz)\\b/i.test(text)) markers.push("calma")
-    if (/\\b(confiante|determinado|seguro|firme)\\b/i.test(text)) markers.push("confiança")
+    if (/\b(feliz|alegria|contente|radiante|entusiasmado)\b/i.test(text)) markers.push("alegria")
+    if (/\b(triste|tristeza|melancolia|desapontado|abatido)\b/i.test(text)) markers.push("tristeza")
+    if (/\b(medo|receio|ansiedade|preocupado|nervoso)\b/i.test(text)) markers.push("ansiedade")
+    if (/\b(raiva|irritação|frustração|bravo|indignado)\b/i.test(text)) markers.push("irritação")
+    if (/\b(calmo|sereno|tranquilo|relaxado|paz)\b/i.test(text)) markers.push("calma")
+    if (/\b(confiante|determinado|seguro|firme)\b/i.test(text)) markers.push("confiança")
     
     return markers
   }
@@ -404,4 +412,3 @@ export class FineTuningDatasetGenerator {
     return insights.length > 0 ? insights.join(" ") : "Insights adicionais em análise."
   }
 }
-
