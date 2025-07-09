@@ -21,6 +21,7 @@ export interface LLMResponse {
   emotional_tone?: string
   keywords?: string[]
   domain_analysis?: any
+  analysis?: string
 }
 
 export interface FileUploadRequest {
@@ -36,6 +37,19 @@ export interface FileUploadResponse {
   storage_file_id: string
   transcription_file_id?: string
   transcription_url?: string
+}
+
+export interface TranscriptionUploadResult {
+  fileId: string
+  fileUrl: string
+  success: boolean
+}
+
+export interface FinalReportResult {
+  reportFileUrl: string
+  datasetFileUrl: string
+  voiceCloningData: any[]
+  success: boolean
 }
 
 // Export the services that are being imported
@@ -70,10 +84,196 @@ export async function transcribeAudio(audioBlob: Blob): Promise<LLMResponse> {
     const data = await response.json()
     const transcription = data.results.channels[0].alternatives[0].transcript
 
-    return { transcription }
+    // Extract keywords from transcription
+    const keywords = extractKeywords(transcription)
+
+    return { 
+      transcription,
+      keywords,
+      confidence_score: data.results.channels[0].alternatives[0].confidence || 0.8,
+      emotional_tone: 'neutral' // Default emotional tone
+    }
   } catch (error) {
     console.error('Error transcribing audio:', error)
     throw error
+  }
+}
+
+// EXPORTED: Upload de arquivo para Supabase Storage
+export async function UploadFile(request: FileUploadRequest): Promise<FileUploadResponse> {
+  try {
+    console.log('📤 Iniciando upload de arquivo para Supabase Storage...')
+    
+    const fileName = `${request.userEmail}_q${request.questionIndex}_${Date.now()}.wav`
+    const filePath = `audio/${request.userEmail}/${fileName}`
+    
+    // Simular upload usando supabaseStorageService
+    const uploadResult = await supabaseStorageService.uploadFile(
+      request.file,
+      filePath,
+      {
+        userEmail: request.userEmail,
+        questionIndex: request.questionIndex,
+        questionText: request.questionText
+      }
+    )
+    
+    console.log('✅ Upload concluído:', uploadResult.url)
+    
+    return {
+      file_url: uploadResult.url,
+      file_id: uploadResult.id,
+      storage_file_id: uploadResult.id,
+      transcription_file_id: undefined,
+      transcription_url: undefined
+    }
+  } catch (error) {
+    console.error('❌ Erro no upload:', error)
+    throw new Error(`Falha no upload: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+  }
+}
+
+// EXPORTED: Salvar transcrição no Supabase Storage
+export async function saveTranscriptionToStorage(
+  transcription: string,
+  userEmail: string,
+  questionIndex: number,
+  questionText: string
+): Promise<TranscriptionUploadResult> {
+  try {
+    console.log('📝 Salvando transcrição no Supabase Storage...')
+    
+    const fileName = `${userEmail}_q${questionIndex}_transcription_${Date.now()}.txt`
+    const filePath = `transcriptions/${userEmail}/${fileName}`
+    
+    // Criar arquivo de texto da transcrição
+    const transcriptionContent = `PERGUNTA ${questionIndex}: ${questionText}\n\nRESPOSTA: ${transcription}\n\nProcessado em: ${new Date().toISOString()}`
+    const transcriptionBlob = new Blob([transcriptionContent], { type: 'text/plain' })
+    const transcriptionFile = new File([transcriptionBlob], fileName, { type: 'text/plain' })
+    
+    // Upload usando supabaseStorageService
+    const uploadResult = await supabaseStorageService.uploadFile(
+      transcriptionFile,
+      filePath,
+      {
+        userEmail,
+        questionIndex,
+        questionText,
+        type: 'transcription'
+      }
+    )
+    
+    console.log('✅ Transcrição salva:', uploadResult.url)
+    
+    return {
+      fileId: uploadResult.id,
+      fileUrl: uploadResult.url,
+      success: true
+    }
+  } catch (error) {
+    console.error('❌ Erro ao salvar transcrição:', error)
+    throw new Error(`Falha ao salvar transcrição: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+  }
+}
+
+// EXPORTED: Gerar relatório final e dataset
+export async function generateFinalReportAndDataset(
+  userEmail: string,
+  analysisResult: LLMResponse,
+  responses: any[]
+): Promise<FinalReportResult> {
+  try {
+    console.log('📄 Gerando relatório final e dataset...')
+    
+    // Gerar relatório em PDF
+    const reportContent = generateReportContent(userEmail, analysisResult, responses)
+    const reportBlob = new Blob([reportContent], { type: 'text/html' })
+    const reportFile = new File([reportBlob], `${userEmail}_report_${Date.now()}.html`, { type: 'text/html' })
+    
+    const reportPath = `reports/${userEmail}/final_report_${Date.now()}.html`
+    const reportUpload = await supabaseStorageService.uploadFile(
+      reportFile,
+      reportPath,
+      {
+        userEmail,
+        type: 'final_report'
+      }
+    )
+    
+    // Gerar dataset de fine-tuning
+    const datasetGenerator = new FineTuningDatasetGenerator()
+    const dataset = await datasetGenerator.generateDataset(userEmail, responses)
+    
+    const datasetContent = JSON.stringify(dataset, null, 2)
+    const datasetBlob = new Blob([datasetContent], { type: 'application/json' })
+    const datasetFile = new File([datasetBlob], `${userEmail}_dataset_${Date.now()}.json`, { type: 'application/json' })
+    
+    const datasetPath = `datasets/${userEmail}/fine_tuning_dataset_${Date.now()}.json`
+    const datasetUpload = await supabaseStorageService.uploadFile(
+      datasetFile,
+      datasetPath,
+      {
+        userEmail,
+        type: 'fine_tuning_dataset'
+      }
+    )
+    
+    // Preparar dados de clonagem de voz
+    const voiceCloningData = responses
+      .filter(r => r.audio_file_url)
+      .map(r => ({
+        audioUrl: r.audio_file_url,
+        transcription: r.transcript_text,
+        questionIndex: r.question_index,
+        duration: r.audio_duration
+      }))
+    
+    console.log('✅ Relatório e dataset gerados com sucesso!')
+    
+    return {
+      reportFileUrl: reportUpload.url,
+      datasetFileUrl: datasetUpload.url,
+      voiceCloningData,
+      success: true
+    }
+  } catch (error) {
+    console.error('❌ Erro ao gerar relatório e dataset:', error)
+    throw new Error(`Falha na geração: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+  }
+}
+
+// EXPORTED: Gerar análise psicológica (função principal chamada em Analysis.tsx)
+export async function generateAnalysis(transcriptions: string[]): Promise<LLMResponse> {
+  try {
+    console.log('🧠 Gerando análise psicológica completa...')
+    
+    const combinedTranscriptions = transcriptions.join('\n\n---\n\n')
+    
+    // Usar análise psicológica do Gemini
+    const analysisResult = await generatePsychologicalAnalysis(
+      transcriptions,
+      'completa',
+      transcriptions.length
+    )
+    
+    // Gerar insights adicionais
+    const keyInsights = await generateKeyInsights(transcriptions)
+    const behavioralPatterns = await generateBehavioralPatterns(transcriptions)
+    const recommendations = await generateRecommendations(transcriptions)
+    const personalitySummary = await generatePersonalitySummary(transcriptions)
+    
+    return {
+      analysis_document: analysisResult.analysis_document,
+      personality_summary: personalitySummary.personality_summary,
+      key_insights: keyInsights.key_insights,
+      behavioral_patterns: behavioralPatterns.behavioral_patterns,
+      recommendations: recommendations.recommendations,
+      confidence_score: 0.9,
+      emotional_tone: 'analytical'
+    }
+  } catch (error) {
+    console.error('❌ Erro na análise:', error)
+    throw new Error(`Falha na análise: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
   }
 }
 
@@ -381,4 +581,133 @@ export async function generatePersonalitySummary(
     console.error('Error generating personality summary:', error)
     throw error
   }
+}
+
+// Funções auxiliares
+function extractKeywords(text: string): string[] {
+  const words = text.toLowerCase().split(/\W+/)
+  const stopWords = ['o', 'a', 'de', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não', 'uma', 'os', 'no', 'se', 'na', 'por', 'mais', 'as', 'dos', 'como', 'mas', 'foi', 'ao', 'ele', 'das', 'tem', 'à', 'seu', 'sua', 'ou', 'ser', 'quando', 'muito', 'há', 'nos', 'já', 'está', 'eu', 'também', 'só', 'pelo', 'pela', 'até', 'isso', 'ela', 'entre', 'era', 'depois', 'sem', 'mesmo', 'aos', 'ter', 'seus', 'quem', 'nas', 'me', 'esse', 'eles', 'estão', 'você', 'tinha', 'foram', 'essa', 'num', 'nem', 'suas', 'meu', 'às', 'minha', 'têm', 'numa', 'pelos', 'elas', 'havia', 'seja', 'qual', 'será', 'nós', 'tenho', 'lhe', 'deles', 'essas', 'esses', 'pelas', 'este', 'fosse', 'dele']
+  
+  return words
+    .filter(word => word.length > 3 && !stopWords.includes(word))
+    .slice(0, 10)
+}
+
+function generateReportContent(userEmail: string, analysisResult: LLMResponse, responses: any[]): string {
+  const reportDate = new Date().toLocaleDateString('pt-BR')
+  
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Análise Psicológica - DNA UP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .meta-info {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .insights {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .patterns {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .recommendations {
+            background: #d1ecf1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        ul {
+            margin: 10px 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Relatório de Análise Psicológica</h1>
+        
+        <div class="meta-info">
+            <p><strong>Usuário:</strong> ${userEmail}</p>
+            <p><strong>Data:</strong> ${reportDate}</p>
+            <p><strong>Respostas Analisadas:</strong> ${responses.length}</p>
+            <p><strong>Confiança da Análise:</strong> ${((analysisResult.confidence_score || 0.9) * 100).toFixed(1)}%</p>
+        </div>
+
+        <h2>Análise Completa</h2>
+        <div>${analysisResult.analysis_document || 'Análise não disponível'}</div>
+
+        <h2>Resumo de Personalidade</h2>
+        <div>${analysisResult.personality_summary || 'Resumo não disponível'}</div>
+
+        <h2>Insights Chave</h2>
+        <div class="insights">
+            <ul>
+                ${(analysisResult.key_insights || []).map(insight => `<li>${insight}</li>`).join('')}
+            </ul>
+        </div>
+
+        <h2>Padrões Comportamentais</h2>
+        <div class="patterns">
+            <ul>
+                ${(analysisResult.behavioral_patterns || []).map(pattern => `<li>${pattern}</li>`).join('')}
+            </ul>
+        </div>
+
+        <h2>Recomendações</h2>
+        <div class="recommendations">
+            <ul>
+                ${(analysisResult.recommendations || []).map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+        </div>
+
+        <h2>Dados Técnicos</h2>
+        <div class="meta-info">
+            <p><strong>Tom Emocional:</strong> ${analysisResult.emotional_tone || 'Não definido'}</p>
+            <p><strong>Palavras-chave:</strong> ${(analysisResult.keywords || []).join(', ')}</p>
+            <p><strong>Método:</strong> Protocolo Clara R. - 108 perguntas estratégicas</p>
+            <p><strong>Processamento:</strong> Gemini AI + Deepgram</p>
+        </div>
+    </div>
+</body>
+</html>
+  `
 }
