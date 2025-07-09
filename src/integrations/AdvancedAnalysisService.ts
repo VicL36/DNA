@@ -6,7 +6,7 @@
 export interface AdvancedAnalysisRequest {
   userEmail: string;
   responses: any[];
-  audioFiles: string[]; // Mantido para futuras expansões de análise de áudio real
+  audioFiles: string[];
 }
 
 export interface PersonalityProfile {
@@ -324,7 +324,6 @@ export class AdvancedAnalysisService {
     
     if (isJsonOutput) {
         try {
-            // A API já retorna o JSON parseado quando o mimeType é application/json
             return JSON.parse(textResponse);
         } catch (e) {
             console.error("Falha ao parsear JSON da resposta da API:", textResponse);
