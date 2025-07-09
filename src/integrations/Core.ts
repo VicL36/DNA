@@ -120,30 +120,7 @@ export async function generateAnalysis(transcriptions: string[]): Promise<LLMRes
 
     console.log('🧠 Iniciando análise com Gemini AI...')
 
-    const prompt = `
-# Análise Psicológica Profunda - Protocolo Clara R.
-
-Você é um especialista em análise psicológica. Analise as seguintes respostas do protocolo Clara R. e gere uma análise completa da personalidade.
-
-## Respostas para análise:
-${transcriptions.join('\n\n---\n\n')}
-
-## Instruções:
-1. Analise padrões de personalidade, valores, crenças e comportamentos
-2. Identifique características únicas e traços dominantes
-3. Gere insights profundos sobre motivações e medos
-4. Forneça recomendações de desenvolvimento pessoal
-5. Mantenha tom profissional e empático
-6. Responda em português brasileiro
-
-## Estrutura da resposta:
-- Perfil Geral (2-3 parágrafos)
-- Características Principais (lista de 5-6 pontos)
-- Padrões Comportamentais (lista de 5-6 pontos)
-- Recomendações (2-3 parágrafos)
-
-Retorne uma análise estruturada e detalhada.
-`
+    const prompt = `\n# Análise Psicológica Profunda - Protocolo Clara R.\n\nVocê é um especialista em análise psicológica. Analise as seguintes respostas do protocolo Clara R. e gere uma análise completa da personalidade.\n\n## Respostas para análise:\n${transcriptions.join('\n\n---\n\n')}\n\n## Instruções:\n1. Analise padrões de personalidade, valores, crenças e comportamentos\n2. Identifique características únicas e traços dominantes\n3. Gere insights profundos sobre motivações e medos\n4. Forneça recomendações de desenvolvimento pessoal\n5. Mantenha tom profissional e empático\n6. Responda em português brasileiro\n\n## Estrutura da resposta:\n- Perfil Geral (2-3 parágrafos)\n- Características Principais (lista de 5-6 pontos)\n- Padrões Comportamentais (lista de 5-6 pontos)\n- Recomendações (2-3 parágrafos)\n\nRetorne uma análise estruturada e detalhada.\n`
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
@@ -633,59 +610,11 @@ function extractRecommendations(text: string): string {
 }
 
 function generateDomainAnalysis(transcriptions: string[]): any {
-  // Gerar análise mais detalhada baseada no conteúdo
-  const baseScore = transcriptions.length > 0 ? 7.0 : 5.0
-  const variation = transcriptions.length * 0.1
-  
+  const responseCount = transcriptions.length;
+  const analysisDepth = responseCount > 50 ? 'PROFUNDA' : responseCount > 20 ? 'DETALHADA' : 'PRELIMINAR';
+
   return {
-    analysis_document: `
-# ANÁLISE PSICOLÓGICA ${analysisDepth.toUpperCase()} - PROTOCOLO CLARA R.
-
-## Resumo Executivo
-Análise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. 
-
-${responseCount > 50 ? 
-  'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.' :
-  responseCount > 20 ?
-  'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.' :
-  'Análise inicial baseada nas primeiras respostas, fornecendo insights preliminares sobre padrões de personalidade e comportamento.'
-}
-}
-
-## Características Principais Identificadas
-
-### Estilo Comunicativo
-${responseCount > 30 ? 
-  'Demonstra comunicação elaborada e reflexiva, com tendência a fornecer contexto detalhado e conexões conceituais em suas respostas.' :
-  'Padrão comunicativo em desenvolvimento, com indicações de reflexividade e estruturação de pensamento.'
-}
-
-### Processamento Cognitivo
-${responseCount > 40 ? 
-  'Evidencia pensamento estruturado e analítico, com capacidade de integrar diferentes perspectivas e considerar múltiplas variáveis em suas reflexões.' :
-  'Sinais de processamento cognitivo organizado, com tendência à análise e síntese de informações.'
-}
-
-### Orientação Pessoal
-${responseCount > 35 ? 
-  'Forte orientação para crescimento pessoal e desenvolvimento contínuo, demonstrando valorização do autoconhecimento e aprendizado experiencial.' :
-  'Indicações de interesse em desenvolvimento pessoal e busca por compreensão mais profunda de si mesmo.'
-}
-
-### Padrões Relacionais
-${responseCount > 25 ? 
-  'Valorização de relacionamentos autênticos e profundos, com preferência por conexões significativas e comunicação genuína.' :
-  'Primeiros indícios de valorização da autenticidade nas relações interpessoais.'
-}
-
-## Conclusão
-${responseCount > 60 ? 
-  'A análise revela um perfil psicológico rico e multifacetado, com padrões consistentes que indicam uma personalidade bem integrada e consciente de suas características e motivações.' :
-  responseCount > 30 ?
-  'Os padrões emergentes sugerem uma personalidade em processo de autoconhecimento, com características distintivas que se tornam mais claras conforme mais dados são coletados.' :
-  'Análise preliminar que estabelece uma base sólida para compreensão da personalidade, com potencial para aprofundamento através de respostas adicionais.'
-}
-    `,
+    analysis_document: `\n# ANÁLISE PSICOLÓGICA ${analysisDepth} - PROTOCOLO CLARA R.\n\n## Resumo Executivo\nAnálise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. \n\n${responseCount > 50 ? \n  'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.' :\n  responseCount > 20 ?\n  'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.' :\n  'Análise inicial baseada nas primeiras respostas, fornecendo insights preliminares sobre padrões de personalidade e comportamento.'\n}\n\n## Características Principais Identificadas\n\n### Estilo Comunicativo\n${responseCount > 30 ? \n  'Demonstra comunicação elaborada e reflexiva, com tendência a fornecer contexto detalhado e conexões conceituais em suas respostas.' :\n  'Padrão comunicativo em desenvolvimento, com indicações de reflexividade e estruturação de pensamento.'\n}\n\n### Processamento Cognitivo\n${responseCount > 40 ? \n  'Evidencia pensamento estruturado e analítico, com capacidade de integrar diferentes perspectivas e considerar múltiplas variáveis em suas reflexões.' :\n  'Sinais de processamento cognitivo organizado, com tendência à análise e síntese de informações.'\n}\n\n### Orientação Pessoal\n${responseCount > 35 ? \n  'Forte orientação para crescimento pessoal e desenvolvimento contínuo, demonstrando valorização do autoconhecimento e aprendizado experiencial.' :\n  'Indicações de interesse em desenvolvimento pessoal e busca por compreensão mais profunda de si mesmo.'\n}\n\n### Padrões Relacionais\n${responseCount > 25 ? \n  'Valorização de relacionamentos autênticos e profundos, com preferência por conexões significativas e comunicação genuína.' :\n  'Primeiros indícios de valorização da autenticidade nas relações interpessoais.'\n}\n\n## Conclusão\n${responseCount > 60 ? \n  'A análise revela um perfil psicológico rico e multifacetado, com padrões consistentes que indicam uma personalidade bem integrada e consciente de suas características e motivações.' :\n  responseCount > 30 ?\n  'Os padrões emergentes sugerem uma personalidade em processo de autoconhecimento, com características distintivas que se tornam mais claras conforme mais dados são coletados.' :\n  'Análise preliminar que estabelece uma base sólida para compreensão da personalidade, com potencial para aprofundamento através de respostas adicionais.'\n}    `,
     personality_summary: responseCount > 40 ? 
       'Personalidade reflexiva e analítica com forte orientação para desenvolvimento pessoal, comunicação autêntica e busca por significado e propósito em experiências de vida.' :
       responseCount > 20 ?
@@ -714,5 +643,25 @@ ${responseCount > 60 ?
       `Estabeleça práticas básicas de autorreflexão para consolidar os insights iniciais. Continue explorando suas motivações e valores através de experiências diversificadas. Recomenda-se completar mais respostas do protocolo para uma análise mais aprofundada e recomendações personalizadas.`,
 
     confidence_score: Math.min(0.95, 0.4 + (responseCount / 108) * 0.55),
+    limitations: [
+      'Análise baseada em respostas disponíveis',
+      'Contexto limitado ao protocolo Clara R.',
+      `Baseada em ${responseCount} de 108 respostas possíveis`
+    ]
+  }
 }
+
+function generateMockAnalysis(transcriptions: string[]): LLMResponse {
+  const mockSummary = `Análise simulada para ${transcriptions.length} transcrições. Esta é uma resposta de exemplo para teste da funcionalidade de análise.`
+  return {
+    analysis_document: mockSummary,
+    personality_summary: mockSummary,
+    key_insights: ['Insight simulado 1', 'Insight simulado 2'],
+    behavioral_patterns: ['Padrão simulado 1', 'Padrão simulado 2'],
+    recommendations: 'Recomendação simulada: Continue explorando as funcionalidades do sistema.',
+    confidence_score: 0.70,
+    domain_analysis: {},
+  }
+}
+
 
