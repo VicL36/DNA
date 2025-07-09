@@ -104,26 +104,20 @@ export async function UploadFile(request: FileUploadRequest): Promise<FileUpload
   try {
     console.log('📤 Iniciando upload de arquivo para Supabase Storage...')
     
-    const fileName = `${request.userEmail}_q${request.questionIndex}_${Date.now()}.wav`
-    const filePath = `audio/${request.userEmail}/${fileName}`
-    
-    // Simular upload usando supabaseStorageService
-    const uploadResult = await supabaseStorageService.uploadFile(
+    // Use the correct method from SupabaseStorageService
+    const uploadResult = await supabaseStorageService.uploadAudioFile(
       request.file,
-      filePath,
-      {
-        userEmail: request.userEmail,
-        questionIndex: request.questionIndex,
-        questionText: request.questionText
-      }
+      request.userEmail,
+      request.questionIndex,
+      request.questionText
     )
     
-    console.log('✅ Upload concluído:', uploadResult.url)
+    console.log('✅ Upload concluído:', uploadResult.fileUrl)
     
     return {
-      file_url: uploadResult.url,
-      file_id: uploadResult.id,
-      storage_file_id: uploadResult.id,
+      file_url: uploadResult.fileUrl,
+      file_id: uploadResult.fileId,
+      storage_file_id: uploadResult.fileId,
       transcription_file_id: undefined,
       transcription_url: undefined
     }
@@ -143,31 +137,19 @@ export async function saveTranscriptionToStorage(
   try {
     console.log('📝 Salvando transcrição no Supabase Storage...')
     
-    const fileName = `${userEmail}_q${questionIndex}_transcription_${Date.now()}.txt`
-    const filePath = `transcriptions/${userEmail}/${fileName}`
-    
-    // Criar arquivo de texto da transcrição
-    const transcriptionContent = `PERGUNTA ${questionIndex}: ${questionText}\n\nRESPOSTA: ${transcription}\n\nProcessado em: ${new Date().toISOString()}`
-    const transcriptionBlob = new Blob([transcriptionContent], { type: 'text/plain' })
-    const transcriptionFile = new File([transcriptionBlob], fileName, { type: 'text/plain' })
-    
-    // Upload usando supabaseStorageService
-    const uploadResult = await supabaseStorageService.uploadFile(
-      transcriptionFile,
-      filePath,
-      {
-        userEmail,
-        questionIndex,
-        questionText,
-        type: 'transcription'
-      }
+    // Use the correct method from SupabaseStorageService
+    const uploadResult = await supabaseStorageService.uploadTranscription(
+      transcription,
+      userEmail,
+      questionIndex,
+      questionText
     )
     
-    console.log('✅ Transcrição salva:', uploadResult.url)
+    console.log('✅ Transcrição salva:', uploadResult.fileUrl)
     
     return {
-      fileId: uploadResult.id,
-      fileUrl: uploadResult.url,
+      fileId: uploadResult.fileId,
+      fileUrl: uploadResult.fileUrl,
       success: true
     }
   } catch (error) {
@@ -185,37 +167,20 @@ export async function generateFinalReportAndDataset(
   try {
     console.log('📄 Gerando relatório final e dataset...')
     
-    // Gerar relatório em PDF
-    const reportContent = generateReportContent(userEmail, analysisResult, responses)
-    const reportBlob = new Blob([reportContent], { type: 'text/html' })
-    const reportFile = new File([reportBlob], `${userEmail}_report_${Date.now()}.html`, { type: 'text/html' })
-    
-    const reportPath = `reports/${userEmail}/final_report_${Date.now()}.html`
-    const reportUpload = await supabaseStorageService.uploadFile(
-      reportFile,
-      reportPath,
-      {
-        userEmail,
-        type: 'final_report'
-      }
+    // Gerar relatório final usando SupabaseStorageService
+    const reportUpload = await supabaseStorageService.uploadFinalReport(
+      userEmail,
+      analysisResult,
+      responses
     )
     
     // Gerar dataset de fine-tuning
     const datasetGenerator = new FineTuningDatasetGenerator()
     const dataset = await datasetGenerator.generateDataset(userEmail, responses)
     
-    const datasetContent = JSON.stringify(dataset, null, 2)
-    const datasetBlob = new Blob([datasetContent], { type: 'application/json' })
-    const datasetFile = new File([datasetBlob], `${userEmail}_dataset_${Date.now()}.json`, { type: 'application/json' })
-    
-    const datasetPath = `datasets/${userEmail}/fine_tuning_dataset_${Date.now()}.json`
-    const datasetUpload = await supabaseStorageService.uploadFile(
-      datasetFile,
-      datasetPath,
-      {
-        userEmail,
-        type: 'fine_tuning_dataset'
-      }
+    const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
+      dataset,
+      userEmail
     )
     
     // Preparar dados de clonagem de voz
@@ -225,14 +190,22 @@ export async function generateFinalReportAndDataset(
         audioUrl: r.audio_file_url,
         transcription: r.transcript_text,
         questionIndex: r.question_index,
-        duration: r.audio_duration
+        duration: r.audio_duration,
+        fileName: `audio_q${r.question_index}.wav`,
+        fileUrl: r.audio_file_url,
+        qualityScore: 0.8,
+        emotionTag: r.emotional_tone || 'neutral',
+        energyLevel: 'medium'
       }))
+
+    // Salvar dados de clonagem de voz
+    await supabaseStorageService.uploadVoiceCloningData(voiceCloningData, userEmail)
     
     console.log('✅ Relatório e dataset gerados com sucesso!')
     
     return {
-      reportFileUrl: reportUpload.url,
-      datasetFileUrl: datasetUpload.url,
+      reportFileUrl: reportUpload.fileUrl,
+      datasetFileUrl: datasetUpload.fileUrl,
       voiceCloningData,
       success: true
     }
