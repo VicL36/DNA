@@ -169,13 +169,19 @@ export async function generateAnalysisDocument(
       throw new Error('Gemini API key not found in environment variables.')
     }
 
+    let analysisSummary = '';
+    if (responseCount > 50) {
+      analysisSummary = 'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.';
+    } else if (responseCount > 20) {
+      analysisSummary = 'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.';
+    } else {
+      analysisSummary = 'Ainda não há dados suficientes para uma análise aprofundada. Recomenda-se coletar mais respostas para obter um perfil mais completo.';
+    }
+
+    const analysisText = `\n# ANÁLISE PSICOLÓGICA ${analysisDepth} - PROTOCOLO CLARA R.\n\n## Resumo Executivo\nAnálise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. \n\n${analysisSummary}`;
+
     return {
-      analysis_document: `\n# ANÁLISE PSICOLÓGICA ${analysisDepth} - PROTOCOLO CLARA R.\n\n## Resumo Executivo\nAnálise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. \n\n${responseCount > 50 ? \
-    'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.' :
-    responseCount > 20 ?\
-    'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.' :\
-    'Ainda não há dados suficientes para uma análise aprofundada. Recomenda-se coletar mais respostas para obter um perfil mais completo.'
-  }`,
+      analysis_document: analysisText,
     }
   } catch (error) {
     console.error('Error generating analysis document:', error)
