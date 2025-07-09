@@ -712,4 +712,7 @@ ${responseCount > 60 ?
       responseCount > 20 ?
       `Desenvolva práticas regulares de autorreflexão para aprofundar o autoconhecimento emergente. Busque oportunidades de aprendizado que alinhem com seus interesses de crescimento pessoal. Considere expandir suas redes de relacionamento com pessoas que compartilhem valores similares de autenticidade e desenvolvimento.` :
       `Estabeleça práticas básicas de autorreflexão para consolidar os insights iniciais. Continue explorando suas motivações e valores através de experiências diversificadas. Recomenda-se completar mais respostas do protocolo para uma análise mais aprofundada e recomendações personalizadas.`,
+
     confidence_score: Math.min(0.95, 0.4 + (responseCount / 108) * 0.55),
+}
+
