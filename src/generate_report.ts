@@ -1,55 +1,59 @@
-import { generateAnalysis, generateFinalReportAndDataset } from './integrations/Core';
-import { userResponses } from './responses';
-import { SupabaseStorageService } from './integrations/SupabaseStorageService';
+import { AdvancedAnalysisService } from './integrations/AdvancedAnalysisService';
+import { userResponses } from './responses'; // Assumindo que este ficheiro existe com o array de 108+ respostas
 
-// Variáveis de ambiente reais
-process.env.VITE_DEEPGRAM_API_KEY = 'd5e17e9c32083291e469eec6e10019664ebba41e';
+// Configure as suas variáveis de ambiente para o script Node.js
+// NOTA: Certifique-se de que as suas chaves de API são válidas e têm acesso aos modelos necessários.
 process.env.VITE_GEMINI_API_KEY = 'AIzaSyAN3lGIldKCCmN-TC_c0PklZlqxF1PdlDM';
-process.env.VITE_SUPABASE_URL = 'https://nzsyuhewavijzszlgshx.supabase.co';
-process.env.VITE_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56c3l1aGV3YXZpanpzemxnc2h4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyNDYxODcsImV4cCI6MjA2NjgyMjE4N30.nagWs7Py94q879nRLpifyUY3hWCqg_rKMWVSm5YpXfI';
+// Adicione outras chaves de API se forem necessárias para outros serviços.
 
-process.env.VITE_AUDIO_BASE_URL = 'https://jesvvdegtmbbuiuqwkdd.supabase.co/storage/v1/object/public/dna-protocol-audio/';
-
-async function runReportGeneration() {
+async function runManualGeneration() {
   try {
-    console.log('Iniciando a geração do relatório e dataset...');
+    console.log('🚀 Iniciando a geração do MANUAL DE PERSONIFICAÇÃO COMPLETO...');
 
-    // Simular um email de usuário para o Supabase Storage
-    const userEmail = 'vicleandro36@gmail.com';
+    const userEmail = 'vileproj10@gmail.com';
 
-    // 1. Gerar a análise com Gemini
-    console.log('Chamando generateAnalysis com as respostas...');
-    const analysisResult = await generateAnalysis(userResponses);
-    console.log('Análise gerada:', analysisResult.analysis_document.substring(0, 200) + '...');
+    // Validação para garantir que temos respostas suficientes para a análise completa.
+    if (!userResponses || userResponses.length < 108) {
+        throw new Error(`A análise completa requer no mínimo 108 respostas. O ficheiro 'responses.ts' forneceu ${userResponses?.length || 0}.`);
+    }
 
-    // 2. Preparar as respostas para o relatório final (simulando a estrutura esperada)
+    // Simula a formatação das respostas como viriam da aplicação real.
+    // É crucial que cada resposta tenha o 'question_domain' correto para a análise quantitativa.
     const formattedResponses = userResponses.map((response, index) => ({
       question_index: index + 1,
-      question_domain: 'Simulado',
-      question_text: `Pergunta ${index + 1}`,
+      // IMPORTANTE: Substitua este valor pelo domínio real de cada pergunta para uma análise precisa.
+      // Exemplo de como poderia ser feito se tivesse um array de perguntas: questions[index].domain
+      question_domain: 'Ambições & Medos', 
+      question_text: `Pergunta Simulada ${index + 1}`,
       transcript_text: response,
-      audio_duration: Math.floor(Math.random() * 60) + 10, // Duração simulada
-      created_at: new Date().toISOString(),
     }));
 
-    // 3. Gerar o relatório final e o dataset de fine-tuning
-    console.log('Chamando generateFinalReportAndDataset...');
-    const finalReportAndDataset = await generateFinalReportAndDataset(
-      userEmail,
-      analysisResult,
-      formattedResponses
-    );
+    // 1. Instanciar o serviço de análise avançada.
+    const analysisService = new AdvancedAnalysisService();
 
-    console.log('Relatório final URL:', finalReportAndDataset.reportFileUrl);
-    console.log('Dataset de fine-tuning URL:', finalReportAndDataset.datasetFileUrl);
-    console.log('Dados para clonagem de voz (quantidade):', finalReportAndDataset.voiceCloningData.length);
+    // 2. Montar o pedido para a análise completa, conforme a interface AdvancedAnalysisRequest.
+    const request = {
+      userEmail: userEmail,
+      responses: formattedResponses,
+      audioFiles: [] // Nenhum ficheiro de áudio neste teste
+    };
 
-    console.log('Geração concluída com sucesso!');
+    // 3. Chamar o método principal que gera o manual completo.
+    // Esta é a mudança principal: estamos a usar a nova função.
+    const personificationManual = await analysisService.generatePersonificationManual(request);
+
+    // 4. Exibir o resultado final e completo de forma estruturada.
+    console.log('\n\n--- 📖 MANUAL DE PERSONIFICAÇÃO GERADO ---');
+    // Usamos console.dir para uma melhor visualização de objetos complexos no terminal.
+    console.dir(personificationManual, { depth: null });
+    console.log('--- FIM DO MANUAL ---');
+
+    console.log('\n✅ Geração do manual concluída com sucesso!');
+
   } catch (error) {
-    console.error('Erro durante a geração do relatório:', error);
+    console.error('❌ Erro crítico durante a geração do manual:', error);
   }
 }
 
-runReportGeneration();
-
-
+// Executa a função principal.
+runManualGeneration();
