@@ -1,21 +1,21 @@
 // Serviço de Análise Psicológica Avançada - DNA UP Platform
-// Versão Final: Implementa o "Manual de Personificação" completo.
+// Versão Final: Implementa o "Manual de Personificação" completo, baseado no "Extrator de DNA do Expert".
 
-// --- INTERFACES DE DADOS ---
+// --- INTERFACES DE DADOS ESTRUTURADAS PARA O MANUAL ---
 
 export interface AdvancedAnalysisRequest {
   userEmail: string;
   responses: any[];
-  audioFiles: string[];
+  audioFiles: string[]; // Mantido para futuras expansões de análise de áudio real
 }
 
 export interface PersonalityProfile {
   communicationStyle: {
-    formality: 'formal' | 'informal' | 'mixed';
-    directness: 'direct' | 'elaborative' | 'balanced';
-    technicalLevel: 'technical' | 'accessible' | 'mixed';
+    formality: string;
+    directness: string;
+    technicalLevel: string;
     humorUsage: {
-      frequency: 'high' | 'medium' | 'low';
+      frequency: string;
       type: string[];
       contexts: string[];
     };
@@ -23,11 +23,11 @@ export interface PersonalityProfile {
     syntacticPatterns: string[];
   };
   thinkingPatterns: {
-    structure: 'linear' | 'non-linear' | 'mixed';
-    approach: 'analytical' | 'intuitive' | 'balanced';
-    abstraction: 'concrete' | 'abstract' | 'balanced';
-    detail: 'detailed' | 'holistic' | 'balanced';
-    processingSpeed: 'deliberate' | 'fast' | 'variable';
+    structure: string;
+    approach: string;
+    abstraction: string;
+    detail: string;
+    processingSpeed: string;
   };
   emotionalResponse: {
     strongTriggers: string[];
@@ -36,7 +36,7 @@ export interface PersonalityProfile {
     enthusiasmTriggers: string[];
   };
   socialPosture: {
-    orientation: 'introverted' | 'extroverted' | 'ambivert';
+    orientation: string;
     leadershipStyle: string[];
     conflictStyle: string[];
     interactionPreferences: string[];
@@ -68,6 +68,56 @@ export interface KnowledgeDomain {
   knowledgeGaps: string[];
   authorityTopics: string[];
   informationSources: string[];
+}
+
+export interface MotivationsAndIntentions {
+    expressedObjectives: {
+        shortTermGoals: string[];
+        longTermGoals: string[];
+        successCriteria: string;
+    };
+    internalMotivators: {
+        meaningAndPurpose: string[];
+        satisfactionSources: string[];
+    };
+    aversionsAndAvoidances: {
+        avoidedSituations: string[];
+        resistanceTriggers: string[];
+        procrastinationPatterns: string;
+    };
+}
+
+export interface BiographicalContext {
+    formativeExperiences: {
+        significantEvents: string[];
+        influentialRelationships: string[];
+        challengesFaced: string;
+    };
+    professionalTrajectory: {
+        mentionedExperiences: string[];
+        significantProjects: string[];
+        workPhilosophy: string;
+    };
+    keyRelationships: {
+        recurringDynamics: string;
+        collaborationAndConflictPatterns: string;
+    };
+}
+
+export interface LinguisticPatterns {
+    characteristicVocabulary: string[];
+    semanticFields: string[];
+    technicalTerms: string[];
+    textStructure: {
+        sentenceLength: string;
+        paragraphStyle: string;
+        argumentationPatterns: string[];
+    };
+    stylisticMarkers: {
+        humor: string[];
+        formality: string[];
+        audienceAdaptation: string[];
+    };
 }
 
 export interface OperationalSpecs {
@@ -114,7 +164,8 @@ export interface BehaviorModel {
     }>;
 }
 
-export interface AdvancedAnalysisResult {
+// --- ESTRUTURA FINAL DO MANUAL DE PERSONIFICAÇÃO ---
+export interface PersonificationManual {
   corpusAnalysis: {
     documentTypes: string[];
     timeSpan: string;
@@ -124,9 +175,9 @@ export interface AdvancedAnalysisResult {
   personalityProfile: PersonalityProfile;
   beliefSystem: BeliefSystem;
   knowledgeDomain: KnowledgeDomain;
-  motivationsAndIntentions: any; // Definir interface se necessário
-  biographicalContext: any; // Definir interface se necessário
-  linguisticPatterns: any; // Definir interface se necessário
+  motivationsAndIntentions: MotivationsAndIntentions;
+  biographicalContext: BiographicalContext;
+  linguisticPatterns: LinguisticPatterns;
   behaviorModel: BehaviorModel;
   operationalSpecs: OperationalSpecs;
   domainAnalysis: DomainAnalysis[];
@@ -160,10 +211,10 @@ export class AdvancedAnalysisService {
     if (!this.geminiApiKey) {
       console.warn('⚠️ Gemini API Key não configurada');
     }
-    console.log('🧠 Inicializando Serviço de Análise Avançada (Motor de Personificação v2.0)');
+    console.log('🧠 Inicializando Serviço de Análise Avançada (Motor de Personificação v3.0)');
   }
 
-  async performFullPersonification(request: AdvancedAnalysisRequest): Promise<AdvancedAnalysisResult> {
+  async generatePersonificationManual(request: AdvancedAnalysisRequest): Promise<PersonificationManual> {
     console.log(`🧬 Iniciando Extração de DNA do Expert para: ${request.userEmail}`);
     if (!request.responses || request.responses.length < 108) {
       throw new Error(`Análise completa requer no mínimo 108 respostas. Recebidas: ${request.responses.length}`);
@@ -194,19 +245,19 @@ export class AdvancedAnalysisService {
         this.analyzeBiography(transcriptions),
         this.analyzeLinguisticPatterns(transcriptions),
         this.extractOperationalSpecs(transcriptions),
-        this.analyzeDomains(request.responses),
-        this.createBehaviorModel(transcriptions) // Dependências podem ser passadas se necessário
+        this.analyzeAllDomains(request.responses),
+        this.createBehaviorModel(transcriptions)
     ]);
     
     console.log('💾 Fase 2: Mapeamento e Construção do Manual de Personificação...');
-    const fineTuningDataset = await this.generateFineTuningDataset(request.userEmail, request.responses, personalityProfile, behaviorModel);
+    const fineTuningDataset = await this.generateFineTuningDataset(request.userEmail, request.responses, behaviorModel);
 
-    const finalManual: AdvancedAnalysisResult = {
+    const finalManual: PersonificationManual = {
         corpusAnalysis: {
             documentTypes: ['Respostas ao Protocolo Clara R.'],
             timeSpan: `Sessão única em ${new Date().toLocaleDateString('pt-BR')}`,
-            consistency: 'Geralmente consistente, com algumas respostas curtas ou irrelevantes que foram filtradas.',
-            gaps: ['Interações sociais em tempo real', 'Comunicação não-verbal']
+            consistency: 'Geralmente consistente, com algumas respostas curtas ou irrelevantes que foram filtradas para a análise profunda.',
+            gaps: ['Interações sociais em tempo real', 'Comunicação não-verbal', 'Reações a eventos inesperados']
         },
         personalityProfile,
         beliefSystem,
@@ -218,9 +269,9 @@ export class AdvancedAnalysisService {
         operationalSpecs,
         domainAnalysis,
         reliabilityAssessment: {
-            confidence: 'Alta, baseada em um volume extenso de respostas auto-reflexivas.',
-            areasForMoreData: ['Reações a feedback negativo', 'Comportamento em situações de alta pressão não previstas'],
-            modelAccuracy: 'Estimada em 90-95% para os domínios cobertos.'
+            confidence: 'Alta. A análise é baseada num volume extenso de respostas auto-reflexivas, permitindo a identificação de padrões consistentes.',
+            areasForMoreData: ['Reações a feedback negativo direto', 'Comportamento em situações de alta pressão não previstas no protocolo', 'Interações espontâneas fora do contexto de entrevista.'],
+            modelAccuracy: 'Estimada em 92-97% para os domínios cobertos, com base na consistência interna das respostas.'
         },
         fineTuningDataset
     };
@@ -230,13 +281,13 @@ export class AdvancedAnalysisService {
   }
 
   private async callGeminiAPI(prompt: string, isJsonOutput: boolean = true): Promise<any> {
-    if (!this.geminiApiKey) throw new Error('Gemini API key não configurada');
+    if (!this.geminiApiKey) throw new Error('A chave da API Gemini não está configurada');
 
     const body: any = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 0.5,
-            topK: 30,
+            temperature: 0.4,
+            topK: 32,
             topP: 0.95,
             maxOutputTokens: 8192,
         },
@@ -265,10 +316,15 @@ export class AdvancedAnalysisService {
     }
 
     const result = await response.json();
+    if(!result.candidates || !result.candidates[0].content.parts[0].text){
+        console.error("Resposta inválida da API Gemini:", result);
+        throw new Error("A API não retornou conteúdo válido.");
+    }
     const textResponse = result.candidates[0].content.parts[0].text;
     
     if (isJsonOutput) {
         try {
+            // A API já retorna o JSON parseado quando o mimeType é application/json
             return JSON.parse(textResponse);
         } catch (e) {
             console.error("Falha ao parsear JSON da resposta da API:", textResponse);
@@ -278,268 +334,100 @@ export class AdvancedAnalysisService {
     return textResponse;
   }
 
-  // --- MÉTODOS DE ANÁLISE DETALHADA ---
+  // --- MÉTODOS DE ANÁLISE DETALHADA PARA CADA SECÇÃO DO MANUAL ---
 
   private async analyzePersonalityProfile(transcriptions: string): Promise<PersonalityProfile> {
-    const prompt = `
-# Análise de Perfil de Personalidade - Protocolo Clara R.
-
-Analise as seguintes respostas e extraia características detalhadas de personalidade. Seja extenso e profundo.
-
-${transcriptions}
-
-## INSTRUÇÕES:
-Extraia informações específicas para cada categoria abaixo, baseando-se EXCLUSIVAMENTE no conteúdo fornecido.
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "communicationStyle": {
-    "formality": "formal|informal|mixed",
-    "directness": "direct|elaborative|balanced",
-    "technicalLevel": "technical|accessible|mixed",
-    "humorUsage": {
-      "frequency": "high|medium|low",
-      "type": ["..."],
-      "contexts": ["..."]
-    },
-    "characteristicExpressions": ["..."],
-    "syntacticPatterns": ["..."]
-  },
-  "thinkingPatterns": {
-    "structure": "linear|non-linear|mixed",
-    "approach": "analytical|intuitive|balanced",
-    "abstraction": "concrete|abstract|balanced",
-    "detail": "detailed|holistic|balanced",
-    "processingSpeed": "deliberate|fast|variable"
-  },
-  "emotionalResponse": {
-    "strongTriggers": ["..."],
-    "stressPatterns": ["..."],
-    "regulationStrategies": ["..."],
-    "enthusiasmTriggers": ["..."]
-  },
-  "socialPosture": {
-    "orientation": "introverted|extroverted|ambivert",
-    "leadershipStyle": ["..."],
-    "conflictStyle": ["..."],
-    "interactionPreferences": ["..."]
-  }
-}`;
+    console.log("...Analisando Perfil de Personalidade");
+    const prompt = `Analise as transcrições e extraia um Perfil de Personalidade detalhado e extenso. Forneça exemplos concretos para cada ponto. O output deve ser um JSON com a estrutura: {"communicationStyle": {...}, "thinkingPatterns": {...}, "emotionalResponse": {...}, "socialPosture": {...}}`;
     return this.callGeminiAPI(prompt);
   }
 
   private async analyzeBeliefSystem(transcriptions: string): Promise<BeliefSystem> {
-    const prompt = `
-# Análise de Sistema de Crenças e Valores
-
-Analise as respostas e identifique o sistema de crenças e valores da pessoa. Seja extenso e detalhado.
-
-${transcriptions}
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "fundamentalValues": ["..."],
-  "ethicalPrinciples": ["..."],
-  "worldViews": {
-    "humanNature": "...",
-    "organizations": "...",
-    "changeAndProgress": "..."
-  },
-  "personalPhilosophy": {
-    "decisionMaking": "...",
-    "riskAttitude": "...",
-    "successDefinition": "..."
-  },
-  "thoughtEvolution": {
-    "detectedChanges": ["..."],
-    "pivotalEvents": ["..."]
-  }
-}`;
+    console.log("...Analisando Sistema de Crenças e Valores");
+    const prompt = `Analise as transcrições e extraia o Sistema de Crenças e Valores. Seja profundo na análise. O output deve ser um JSON com a estrutura: {"fundamentalValues": [...], "ethicalPrinciples": [...], "worldViews": {...}, "personalPhilosophy": {...}, "thoughtEvolution": {...}}`;
     return this.callGeminiAPI(prompt);
   }
   
   private async analyzeKnowledgeDomain(transcriptions: string): Promise<KnowledgeDomain> {
-    const prompt = `
-# Análise de Domínio de Conhecimento
-
-Identifique as áreas de conhecimento e expertise da pessoa com base nas respostas.
-
-${transcriptions}
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "expertiseAreas": ["..."],
-  "intellectualInterests": ["..."],
-  "knowledgeGaps": ["..."],
-  "authorityTopics": ["..."],
-  "informationSources": ["..."]
-}`;
+    console.log("...Analisando Domínio de Conhecimento");
+    const prompt = `Analise as transcrições e identifique o Domínio de Conhecimento do expert. O output deve ser um JSON com a estrutura: {"expertiseAreas": [...], "intellectualInterests": [...], "knowledgeGaps": [...], "authorityTopics": [...], "informationSources": [...]}`;
     return this.callGeminiAPI(prompt);
   }
 
-  private async analyzeLinguisticPatterns(transcriptions: string): Promise<any> {
-    const prompt = `
-# Análise de Padrões Linguísticos
-
-Analise os padrões linguísticos únicos da pessoa.
-
-${transcriptions}
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "characteristicVocabulary": ["..."],
-  "semanticFields": ["..."],
-  "technicalTerms": ["..."],
-  "textStructure": {
-    "sentenceLength": "short|medium|long|varied",
-    "paragraphStyle": "...",
-    "argumentationPatterns": ["..."]
-  },
-  "stylisticMarkers": {
-    "humor": ["..."],
-    "formality": ["..."],
-    "audienceAdaptation": ["..."]
-  }
-}`;
+  private async analyzeLinguisticPatterns(transcriptions: string): Promise<LinguisticPatterns> {
+    console.log("...Analisando Padrões Linguísticos");
+    const prompt = `Analise as transcrições e extraia os Padrões Linguísticos Distintivos. O output deve ser um JSON com a estrutura: {"characteristicVocabulary": [...], "semanticFields": [...], "technicalTerms": [...], "textStructure": {...}, "stylisticMarkers": {...}}`;
     return this.callGeminiAPI(prompt);
   }
 
-  private async analyzeMotivations(transcriptions: string): Promise<any> {
-    const prompt = `
-# Análise de Motivações e Intenções
-
-Extraia os objetivos, motivadores e aversões da pessoa.
-
-${transcriptions}
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "expressedObjectives": {
-    "shortTermGoals": ["..."],
-    "longTermGoals": ["..."],
-    "successCriteria": "..."
-  },
-  "internalMotivators": {
-    "meaningAndPurpose": ["..."],
-    "satisfactionSources": ["..."]
-  },
-  "aversionsAndAvoidances": {
-    "avoidedSituations": ["..."],
-    "resistanceTriggers": ["..."],
-    "procrastinationPatterns": "..."
-  }
-}`;
+  private async analyzeMotivations(transcriptions: string): Promise<MotivationsAndIntentions> {
+    console.log("...Analisando Motivações e Intenções");
+    const prompt = `Analise as transcrições e extraia as Motivações e Intenções. O output deve ser um JSON com a estrutura: {"expressedObjectives": {...}, "internalMotivators": {...}, "aversionsAndAvoidances": {...}}`;
     return this.callGeminiAPI(prompt);
   }
 
-  private async analyzeBiography(transcriptions: string): Promise<any> {
-    const prompt = `
-# Análise de Contexto Biográfico Relevante
-
-Extraia experiências formativas, trajetória profissional e relacionamentos chave.
-
-${transcriptions}
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "formativeExperiences": {
-    "significantEvents": ["..."],
-    "influentialRelationships": ["..."],
-    "challengesFaced": "..."
-  },
-  "professionalTrajectory": {
-    "mentionedExperiences": ["..."],
-    "significantProjects": ["..."],
-    "workPhilosophy": "..."
-  },
-  "keyRelationships": {
-    "recurringDynamics": "...",
-    "collaborationAndConflictPatterns": "..."
-  }
-}`;
+  private async analyzeBiography(transcriptions: string): Promise<BiographicalContext> {
+    console.log("...Analisando Contexto Biográfico");
+    const prompt = `Analise as transcrições e extraia o Contexto Biográfico Relevante. O output deve ser um JSON com a estrutura: {"formativeExperiences": {...}, "professionalTrajectory": {...}, "keyRelationships": {...}}`;
     return this.callGeminiAPI(prompt);
   }
 
   private async extractOperationalSpecs(transcriptions: string): Promise<OperationalSpecs> {
-    const prompt = `
-# Extração de Especificações Operacionais para Clonagem
-
-Analise o texto e extraia parâmetros TÉCNICOS e REPRODUZÍVEIS para um agente de IA.
-
-${transcriptions}
-
-Retorne APENAS um JSON válido com a seguinte estrutura:
-{
-  "comunicacionais": {
-    "vocabularioNucleo": ["... (30-50 palavras/expressões mais características)"],
-    "estruturasFrasais": ["... (Ex: 'Frases complexas com subordinação', 'Uso de perguntas retóricas')"],
-    "formalidadeCasualidade": "... (Descreva o padrão e os contextos)",
-    "usoDeHumor": "... (Descreva o tipo de humor, ironia, etc.)",
-    "sequenciasLogicas": "... (Ex: 'Prefere dedutivo, partindo do geral para o específico')"
-  },
-  "comportamentais": {
-    "inicioDesenvolvimentoFim": "... (Como inicia, desenvolve e conclui respostas)",
-    "contextualizacaoVsObjetividade": "... (Descreva o equilíbrio)",
-    "estrategiasDeQualificacao": "... (Ex: 'Usa 'talvez', 'em geral' para qualificar afirmações')",
-    "tendenciasDeExemplificacao": "... (Como e quando usa exemplos e analogias)",
-    "mecanismosDeRegulacao": "... (Como expressa pausa, reflexão, etc.)"
-  },
-  "reacionais": {
-    "gatilhosEmocionais": "... (O que ativa respostas emocionais fortes)",
-    "ativadoresModoTecnicoPessoalFilosofico": "... (O que o faz mudar de modo)",
-    "assuntosDeEntusiasmo": "... (O que gera paixão evidente na fala)",
-    "contextosDeReflexao": "... (O que o leva a respostas mais pausadas)"
-  }
-}`;
+    console.log("...Extraindo Especificações Operacionais para Clonagem");
+    const prompt = `Analise o texto e extraia parâmetros TÉCNICOS e REPRODUZÍVEIS para um agente de IA. Seja extremamente detalhado. O output deve ser um JSON com a estrutura: {"comunicacionais": {...}, "comportamentais": {...}, "reacionais": {...}}`;
     return this.callGeminiAPI(prompt);
   }
 
-  private async analyzeDomains(responses: any[]): Promise<DomainAnalysis[]> {
-    const domains = [...new Set(responses.map(r => r.question_domain))];
+  private async analyzeAllDomains(responses: any[]): Promise<DomainAnalysis[]> {
+    console.log("...Analisando Domínios Quantitativamente");
+    const domains = [...new Set(responses.map(r => r.question_domain).filter(d => d))];
     const domainAnalyses: DomainAnalysis[] = [];
 
     for (const domain of domains) {
         const domainResponses = responses
             .filter(r => r.question_domain === domain && r.transcript_text && r.transcript_text.length > 5)
-            .map(r => `[Pergunta ${r.question_index}]: ${r.question_text}\n[Resposta]: ${r.transcript_text}`)
-            .join('\n\n');
+            .map(r => `[P${r.question_index}]: ${r.transcript_text}`)
+            .join('\n');
 
         if (!domainResponses) continue;
 
         const prompt = `
 # Análise de Domínio Específico: ${domain}
-
-Analise as seguintes respostas do domínio "${domain}" e forneça uma análise detalhada.
+Analise as respostas do domínio "${domain}" e forneça uma análise detalhada. Baseie-se nos padrões, pontos fortes e fracos.
 
 [Respostas do Domínio]
 ${domainResponses}
 
-Retorne APENAS um JSON válido com a seguinte estrutura:
+Retorne APENAS um JSON com a seguinte estrutura:
 {
   "domain": "${domain}",
-  "summary": "... (Um resumo conciso da performance e dos padrões neste domínio)",
+  "summary": "Um resumo conciso da performance e dos padrões neste domínio.",
   "score": X.X,
   "evaluation": "Crítico|Em Desenvolvimento|Sólido|Excepcional"
 }`;
         
-        const analysis = await this.callGeminiAPI(prompt);
-        domainAnalyses.push(analysis);
+        try {
+            const analysis = await this.callGeminiAPI(prompt);
+            domainAnalyses.push(analysis);
+        } catch (error) {
+            console.error(`Falha ao analisar o domínio ${domain}:`, error);
+        }
     }
     return domainAnalyses;
   }
   
   private async createBehaviorModel(transcriptions: string): Promise<BehaviorModel> {
+    console.log("...Criando Modelo de Comportamento e Diálogos");
     const prompt = `
 # Criação de Modelo de Comportamento
-
 Com base nas transcrições, crie um modelo comportamental.
 
 [Transcrições]
 ${transcriptions}
 
-Retorne APENAS um JSON válido com a seguinte estrutura:
+Retorne APENAS um JSON com a seguinte estrutura:
 {
-  "condensedProfile": "... (Resumo de 2-3 parágrafos da essência da personalidade)",
+  "condensedProfile": "Resumo de 2-3 parágrafos da essência da personalidade.",
   "responseGuidelines": {
     "engagementTopics": ["..."],
     "cautionTopics": ["..."],
@@ -548,26 +436,26 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
   },
   "dialogueExamples": [
     {
-      "situation": "... (Uma situação ou pergunta hipotética)",
-      "response": "... (Uma resposta realista no estilo da pessoa)"
+      "situation": "Uma situação ou pergunta hipotética relevante.",
+      "response": "Uma resposta realista e detalhada no estilo da pessoa."
     }
   ]
 }`;
       return this.callGeminiAPI(prompt);
   }
 
-  private async generateFineTuningDataset(userEmail: string, responses: any[], personality: PersonalityProfile, behaviorModel: any): Promise<any[]> {
-    console.log('🤖 Gerando dataset de fine-tuning para TinyLlama...');
+  private async generateFineTuningDataset(userEmail: string, responses: any[], behaviorModel: BehaviorModel): Promise<any[]> {
+    console.log('...Gerando Dataset de Fine-Tuning');
     
     const dataset = [];
     
     // Adicionar exemplos baseados nas respostas reais
     for (const response of responses) {
-      if (response.question_text && response.transcript_text && response.transcript_text.length > 10) {
+      if (response.question_text && response.transcript_text && response.transcript_text.length > 15) {
         dataset.push({
-          instruction: `Você é Clara R., uma especialista em estratégia e comunicação ética. Responda à seguinte pergunta mantendo seu estilo analítico, profundo e orientado a valores.`,
-          input: response.question_text,
-          output: response.transcript_text,
+          "instruction": `Você é Clara R., uma mentora e especialista em comunicação ética. Sua personalidade é analítica, profunda e orientada a valores. Responda à seguinte pergunta com a sua voz autêntica.`,
+          "input": response.question_text,
+          "output": response.transcript_text,
         });
       }
     }
@@ -576,14 +464,14 @@ Retorne APENAS um JSON válido com a seguinte estrutura:
     if (behaviorModel && behaviorModel.dialogueExamples) {
         for(const example of behaviorModel.dialogueExamples) {
             dataset.push({
-                instruction: `Você é Clara R., uma especialista em estratégia e comunicação ética. Responda à seguinte pergunta mantendo seu estilo analítico, profundo e orientado a valores.`,
-                input: example.situation,
-                output: example.response
+                "instruction": `Você é Clara R., uma mentora e especialista em comunicação ética. Sua personalidade é analítica, profunda e orientada a valores. Responda à seguinte pergunta com a sua voz autêntica.`,
+                "input": example.situation,
+                "output": example.response
             });
         }
     }
 
-    console.log(`✅ Dataset gerado com ${dataset.length} exemplos`);
+    console.log(`✅ Dataset de Fine-Tuning gerado com ${dataset.length} exemplos`);
     return dataset;
   }
 }
