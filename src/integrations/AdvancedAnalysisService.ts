@@ -1383,6 +1383,30 @@ private getDefaultDecisionMakingStyle(): DecisionMakingStyle {
     influencingFactors: ['dados', 'intuição', 'conselho de especialistas']
   };
 }
+
+// Método para retornar análise padrão completa
+private getDefaultAnalysisResult(audioFiles: string[]): AdvancedAnalysisResult {
+  return {
+    personalityProfile: this.getDefaultPersonalityProfile(),
+    beliefSystem: this.getDefaultBeliefSystem(),
+    knowledgeDomain: this.getDefaultKnowledgeDomain(),
+    linguisticPatterns: this.getDefaultLinguisticPatterns(),
+    voiceCloningData: this.getDefaultVoiceCloningData(audioFiles),
+    behaviorModel: this.getDefaultBehaviorModel(),
+    growthAreas: this.getDefaultGrowthAreas(),
+    improvementStrategies: this.getDefaultImprovementStrategies(),
+    intrinsicMotivations: this.getDefaultIntrinsicMotivations(),
+    communicationPatterns: this.getDefaultCommunicationPatterns(),
+    decisionMakingStyle: this.getDefaultDecisionMakingStyle(),
+    fineTuningDataset: [],
+    confidenceScore: 0.3, // Baixa confiança para análise padrão
+    limitations: [
+      'Análise baseada em dados limitados ou padrão',
+      'Recomenda-se completar mais respostas para análise mais precisa',
+      'Resultados podem não refletir características individuais específicas'
+    ]
+  }
+}
 }
 
 

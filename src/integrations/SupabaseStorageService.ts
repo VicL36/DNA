@@ -657,6 +657,87 @@ ${responses.map((response, i) => `
     return 'Crítico - Área que requer intervenção imediata'
   }
 
+  // Gerar insights padrão a partir do perfil de personalidade
+  private generateInsightsFromProfile(personalityProfile: any): string {
+    const insights = []
+    
+    if (personalityProfile.communicationStyle?.formality) {
+      insights.push(`**Comunicação ${personalityProfile.communicationStyle.formality}:** Demonstra adaptabilidade no estilo comunicativo`)
+    }
+    
+    if (personalityProfile.thinkingPatterns?.approach) {
+      insights.push(`**Abordagem ${personalityProfile.thinkingPatterns.approach}:** Processamento mental característico identificado`)
+    }
+    
+    if (personalityProfile.emotionalResponse?.strongTriggers?.length > 0) {
+      insights.push(`**Responsividade Emocional:** Padrões específicos de ativação emocional detectados`)
+    }
+    
+    if (personalityProfile.socialPosture?.orientation) {
+      insights.push(`**Orientação Social ${personalityProfile.socialPosture.orientation}:** Preferências de interação social bem definidas`)
+    }
+    
+    return insights.length > 0 ? insights.join('\n') : 'Insights sendo processados com base no perfil identificado...'
+  }
+
+  // Gerar padrões padrão a partir do perfil de personalidade
+  private generatePatternsFromProfile(personalityProfile: any): string {
+    const patterns = []
+    
+    if (personalityProfile.communicationStyle?.directness) {
+      patterns.push(`**Padrão Comunicativo:** Tendência à comunicação ${personalityProfile.communicationStyle.directness}`)
+    }
+    
+    if (personalityProfile.thinkingPatterns?.structure) {
+      patterns.push(`**Padrão de Pensamento:** Estruturação mental ${personalityProfile.thinkingPatterns.structure}`)
+    }
+    
+    if (personalityProfile.emotionalResponse?.regulationStrategies?.length > 0) {
+      patterns.push(`**Padrão de Regulação Emocional:** Estratégias consistentes de manejo emocional`)
+    }
+    
+    if (personalityProfile.socialPosture?.leadershipStyle?.length > 0) {
+      patterns.push(`**Padrão de Liderança:** Estilo característico de influência e direcionamento`)
+    }
+    
+    return patterns.length > 0 ? patterns.join('\n') : 'Padrões sendo identificados com base no perfil analisado...'
+  }
+
+  // Gerar áreas de crescimento padrão
+  private generateDefaultGrowthAreas(): string {
+    return `1. **Autoconhecimento Contínuo:** Aprofundar a compreensão dos próprios padrões e motivações
+2. **Inteligência Emocional:** Desenvolver maior consciência e regulação emocional
+3. **Comunicação Efetiva:** Aprimorar habilidades de expressão e escuta ativa
+4. **Flexibilidade Cognitiva:** Expandir a capacidade de adaptação a diferentes contextos
+5. **Relacionamentos Interpessoais:** Fortalecer conexões e habilidades sociais`
+  }
+
+  // Gerar estratégias de melhoria padrão
+  private generateDefaultImprovementStrategies(): string {
+    return `1. **Prática de Mindfulness:** Desenvolver maior consciência presente e autorregulação
+2. **Feedback Ativo:** Buscar e integrar feedback construtivo de pessoas confiáveis
+3. **Aprendizado Contínuo:** Investir em desenvolvimento pessoal e profissional regular
+4. **Reflexão Estruturada:** Implementar práticas de journaling e autoanálise
+5. **Experimentação Comportamental:** Testar novos padrões de comportamento em ambientes seguros`
+  }
+
+  // Gerar motivações padrão
+  private generateDefaultMotivations(): string {
+    return `- Busca por crescimento pessoal e desenvolvimento contínuo
+- Necessidade de contribuição significativa e impacto positivo
+- Valorização da autonomia e liberdade de escolha
+- Desejo de conexões autênticas e relacionamentos profundos
+- Aspiração por maestria e excelência em áreas de interesse`
+  }
+
+  // Gerar padrões de comunicação padrão
+  private generateDefaultCommunicationPatterns(): string {
+    return `- Estilo adaptativo que se ajusta ao contexto e audiência
+- Preferência por comunicação clara e direta quando apropriado
+- Tendência a buscar compreensão mútua em interações
+- Capacidade de equilibrar assertividade com empatia
+- Habilidade de modular o nível técnico conforme necessário`
+  }
   // Preparar dados específicos para AllTalk TTS
   private prepareAllTalkTTSData(voiceCloningData: any[], userEmail: string): any {
     const timestamp = new Date().toISOString()
