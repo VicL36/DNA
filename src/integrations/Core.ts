@@ -645,10 +645,12 @@ function generateDomainAnalysis(transcriptions: string[]): any {
 Análise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. 
 
 ${responseCount > 50 ? 
+  }
   'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.' :
   responseCount > 20 ?
   'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.' :
   'Análise inicial baseada nas primeiras respostas, fornecendo insights preliminares sobre padrões de personalidade e comportamento.'
+}
 }
 
 ## Características Principais Identificadas
