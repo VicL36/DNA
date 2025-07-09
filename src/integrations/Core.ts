@@ -113,8 +113,7 @@ export async function analyzeSentiment(text: string): Promise<LLMResponse> {
   }
 }
 
-// Geração de análise psicológica usando Gemini
-export async function generatePsychologicalAnalysis(
+async function generatePsychologicalAnalysis(
   responses: string[],
   analysisDepth: string,
   responseCount: number,
@@ -380,47 +379,3 @@ export async function generatePersonalitySummary(
     throw error
   }
 }
-
-// Geração de análise de domínio usando Gemini
-export async function generateDomainAnalysis(
-  responses: string[],
-): Promise<LLMResponse> {
-  try {
-    const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
-
-    if (!geminiApiKey) {
-      throw new Error('Gemini API key not found in environment variables.')
-    }
-
-    const prompt = `Com base nas seguintes respostas, gere uma análise de domínio detalhada sobre as áreas de interesse e expertise do indivíduo:\n\n${responses.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt,
-          }],
-        }],
-      }),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(`Gemini API error: ${errorData.error}`)
-    }
-
-    const data = await response.json()
-    const domain_analysis = data.candidates[0].content.parts[0].text.trim()
-
-    return { domain_analysis }
-  } catch (error) {
-    console.error('Error generating domain analysis:', error)
-    throw error
-  }
-}
-
-
