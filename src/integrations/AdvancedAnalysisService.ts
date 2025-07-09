@@ -1166,14 +1166,13 @@ Retorne APENAS um array JSON com 10 exemplos no formato:
   }
 
   private cleanJsonResponse(response: string): string {
-    // Remove markdown code blocks
-    let clean = response.replace(/```json\n?/g, '').replace(/```\n?/g, '')
+    let clean = response.replace(/```json\n?/g, '').replace(/```\n?/g, '');
     
     // Tenta encontrar o primeiro e último colchete ou chave para isolar o JSON
-    const firstBracket = clean.indexOf('[')
-    const firstBrace = clean.indexOf('{')
-    const lastBracket = clean.lastIndexOf(']')
-    const lastBrace = clean.lastIndexOf('}')
+    const firstBracket = clean.indexOf('[');
+    const firstBrace = clean.indexOf('{');
+    const lastBracket = clean.lastIndexOf(']');
+    const lastBrace = clean.lastIndexOf('}');
 
     let startIndex = -1;
     let endIndex = -1;
@@ -1196,10 +1195,8 @@ Retorne APENAS um array JSON com 10 exemplos no formato:
         return response; // Ou throw new Error('No valid JSON found');
     }
   
-    // Remove quebras de linha desnecessárias e espaços extras
-    clean = clean.replace(/\n/g, '').replace(/\s+/g, ' ').trim();
-  
-    return clean;
+    // Não remover quebras de linha ou espaços, pois isso pode corromper o JSON
+    return clean.trim();
   }
 
 // Métodos de fallback com dados padrão
