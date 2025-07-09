@@ -190,13 +190,14 @@ export class AdvancedAnalysisService {
         throw new Error('Nenhuma resposta fornecida para análise')
       }
 
-      // Assumindo que 'isFinalResponse' é um campo no último objeto de resposta
-      // ou que a lista de respostas está completa quando este método é chamado para a análise final.
-      // Se a lógica de controle de fluxo estiver em outro lugar, este método pode ser simplificado.
-      const isFinalResponse = request.responses.some(r => r.isFinalResponse === true);
+      // FIX: Changed the logic to be more robust.
+      // Instead of relying on a fragile 'isFinalResponse' flag, we now check
+      // if the number of responses has reached the protocol's total (108).
+      // This ensures the final analysis runs as soon as all questions are answered.
+      const isAnalysisComplete = request.responses.length >= 108;
 
-      if (!isFinalResponse) {
-        console.log('⏳ Aguardando a resposta final para iniciar a análise completa...');
+      if (!isAnalysisComplete) {
+        console.log('⏳ Aguardando todas as 108 respostas para iniciar a análise completa...');
         // Retorna um resultado parcial ou um indicador de que a análise está pendente
         return {
           personalityProfile: this.getDefaultPersonalityProfile(),
@@ -212,7 +213,7 @@ export class AdvancedAnalysisService {
           decisionMakingStyle: this.getDefaultDecisionMakingStyle(),
           fineTuningDataset: [],
           confidenceScore: 0,
-          limitations: ['Análise pendente: aguardando todas as respostas.']
+          limitations: ['Análise pendente: aguardando todas as 108 respostas.']
         };
       }
 
