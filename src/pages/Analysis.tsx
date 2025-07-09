@@ -236,7 +236,7 @@ export default function Analysis() {
       console.log('📝 Salvando transcrição no Supabase Storage...')
       console.log("📝 Salvando resposta de texto no Supabase Storage...")
       const transcriptionUpload = await supabaseStorageService.saveTranscriptionToStorage(
-        transcriptionResult.transcription || ",
+        transcriptionResult.transcription || "",
         user.email,
         currentQuestionIndex + 1,
         currentQuestion.text
