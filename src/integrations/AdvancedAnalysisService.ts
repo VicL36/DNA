@@ -156,11 +156,24 @@ export interface AdvancedAnalysisResult {
   limitations: string[]
 }
 
+// Helper to get environment variables in both Vite and Node.js
+const getEnv = (key: string): string | undefined => {
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    return import.meta.env[key];
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
 export class AdvancedAnalysisService {
   private geminiApiKey: string
 
   constructor() {
-    this.geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
+    this.geminiApiKey = getEnv('VITE_GEMINI_API_KEY') || ''
     if (!this.geminiApiKey) {
       console.warn('⚠️ Gemini API Key não configurada')
     }
@@ -1405,5 +1418,3 @@ private getDefaultAnalysisResult(audioFiles: string[]): AdvancedAnalysisResult {
   }
 }
 }
-
-
