@@ -177,10 +177,10 @@ export async function generateFinalReportAndDataset(
     // Gerar dataset de fine-tuning
     const datasetGenerator = new FineTuningDatasetGenerator()
     
-    // FIX: The original error "generateDataset is not a function" indicates the method name was wrong.
-    // I've changed it to "createDataset", which is a common convention.
-    // If the error persists, you should verify the actual method name in the 'FineTuningDatasetGenerator' class definition.
-    const dataset = await datasetGenerator.createDataset(userEmail, responses)
+    // FIX: The error "createDataset is not a function" indicates the method name is still wrong.
+    // Trying another common convention: "generate".
+    // If this fails, the method name in the 'FineTuningDatasetGenerator' class needs to be verified.
+    const dataset = await datasetGenerator.generate(userEmail, responses)
     
     const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
       dataset,
