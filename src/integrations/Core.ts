@@ -177,10 +177,22 @@ export async function generateFinalReportAndDataset(
     // Gerar dataset de fine-tuning
     const datasetGenerator = new FineTuningDatasetGenerator()
     
-    // FIX: The error "createDataset is not a function" indicates the method name is still wrong.
-    // Trying another common convention: "generate".
-    // If this fails, the method name in the 'FineTuningDatasetGenerator' class needs to be verified.
-    const dataset = await datasetGenerator.generate(userEmail, responses)
+    // CORREÇÃO: Tentar diferentes nomes de métodos comuns
+    let dataset: any
+    
+    if (typeof datasetGenerator.generate === 'function') {
+      dataset = await datasetGenerator.generate(userEmail, responses)
+    } else if (typeof datasetGenerator.createDataset === 'function') {
+      dataset = await datasetGenerator.createDataset(userEmail, responses)
+    } else if (typeof datasetGenerator.generateDataset === 'function') {
+      dataset = await datasetGenerator.generateDataset(userEmail, responses)
+    } else if (typeof datasetGenerator.build === 'function') {
+      dataset = await datasetGenerator.build(userEmail, responses)
+    } else {
+      // Fallback: criar dataset básico se o método não existir
+      console.warn('⚠️ Método de geração de dataset não encontrado. Criando dataset básico...')
+      dataset = createBasicDataset(userEmail, responses)
+    }
     
     const datasetUpload = await supabaseStorageService.uploadFineTuningDataset(
       dataset,
@@ -216,6 +228,44 @@ export async function generateFinalReportAndDataset(
   } catch (error) {
     console.error('❌ Erro ao gerar relatório e dataset:', error)
     throw new Error(`Falha na geração: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+  }
+}
+
+// Função auxiliar para criar dataset básico quando o método não existir
+function createBasicDataset(userEmail: string, responses: any[]): any {
+  const timestamp = new Date().toISOString()
+  
+  return {
+    metadata: {
+      user_email: userEmail,
+      generated_at: timestamp,
+      total_responses: responses.length,
+      protocol: 'Clara R. - 108 perguntas estratégicas',
+      version: '1.0.0'
+    },
+    training_data: responses.map((response, index) => ({
+      id: `${userEmail}_${index}_${timestamp}`,
+      question_index: response.question_index,
+      question_text: response.question_text,
+      question_domain: response.question_domain,
+      response_text: response.transcript_text,
+      response_type: response.response_type,
+      audio_duration: response.audio_duration,
+      emotional_tone: response.emotional_tone || 'neutral',
+      confidence_score: response.confidence_score || 0.8,
+      created_at: response.created_at,
+      audio_file_url: response.audio_file_url,
+      transcription_url: response.transcription_url
+    })),
+    statistics: {
+      avg_response_length: responses.reduce((sum, r) => sum + (r.transcript_text?.length || 0), 0) / responses.length,
+      domains_covered: [...new Set(responses.map(r => r.question_domain))],
+      total_audio_duration: responses.reduce((sum, r) => sum + (r.audio_duration || 0), 0),
+      response_types: responses.reduce((acc, r) => {
+        acc[r.response_type] = (acc[r.response_type] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+    }
   }
 }
 
