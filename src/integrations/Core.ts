@@ -171,7 +171,7 @@ export async function generateAnalysisDocument(
 
     return {
       analysis_document: `\n# ANÁLISE PSICOLÓGICA ${analysisDepth} - PROTOCOLO CLARA R.\n\n## Resumo Executivo\nAnálise psicológica baseada em ${responseCount} respostas do protocolo Clara R. de 108 perguntas estratégicas. \n\n${responseCount > 50 ? \
-    'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.' :\
+    'A pessoa demonstra padrões consistentes e bem definidos de personalidade, com características distintivas que emergem claramente através das múltiplas dimensões analisadas.' :
     responseCount > 20 ?\
     'Emergem padrões iniciais de personalidade que sugerem tendências comportamentais e cognitivas específicas, embora uma análise mais completa beneficiaria de respostas adicionais.' :\
     'Ainda não há dados suficientes para uma análise aprofundada. Recomenda-se coletar mais respostas para obter um perfil mais completo.'
